@@ -1,57 +1,377 @@
-Drop table MaTable cascade constraints; 
+DECLARE 
+  existe_LOT INTEGER ;
 
-CREATE TABLE T1 (
-    T1Id NUMBER
+BEGIN 
+  SELECT count(*) INTO existe_LOT FROM user_tables WHERE table_name = upper('LOT') ;
+
+  IF existe_LOT > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE LOT CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table LOT;
+CREATE TABLE LOT (
+    code_barre_lot_LOT INT NOT NULL,
+    type_plaque_LOT INT,
+    date_livraison_LOT DATE,
+    vendeur_LOT VARCHAR2(250),
+    fabricant_LOT VARCHAR2(250),
+    stock_precedent_Stock INT,
+    stock_actuel_Stock INT,
+    PRIMARY KEY (code_barre_lot_LOT)
 );
 
-CREATE TABLE T2 (
-    T2Id NUMBER
+drop sequence seq_lot;
+CREATE SEQUENCE SEQ_LOT ;
+
+drop trigger trig_lot;
+CREATE TRIGGER TRIG_LOT BEFORE INSERT ON LOT FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_LOT.NEXTVAL INTO :new.code_barre_lot_LOT FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_PLAQUE INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_PLAQUE FROM user_tables WHERE table_name = upper('PLAQUE') ;
+
+  IF existe_PLAQUE > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE PLAQUE CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table plaque;
+CREATE TABLE PLAQUE (
+    code_barre_plaque_PLAQUE VARCHAR2(250) NOT NULL,
+    code_barre_lot_LOT INT, -- Remplacé "NOT FOUND" par "INT"
+    PRIMARY KEY (code_barre_plaque_PLAQUE)
 );
 
-DECLARE
-    m NUMBER;
-BEGIN
-FOR i IN 1..1000 LOOP
-    -- Sélection de la plus grande valeur présente dans la colonne T1Id
-    SELECT MAX(T1Id) INTO m FROM T1;
-   
-    IF m IS NULL THEN
-        m := 0; -- Si la table est vide, initialiser m à 0
-    ELSE
-        m := m + 1; -- Sinon, incrémenter la valeur maximale de 1
-    END IF;
-    
-    -- Insertion d'une nouvelle ligne dans T1 avec la valeur m+1
-    INSERT INTO T1 (T1Id) VALUES (m);
-    COMMIT;
-end loop;
-END;
-/
-delete from T1;
+drop sequence seq_plaque;
+CREATE SEQUENCE SEQ_PLAQUE ;
 
-CREATE OR REPLACE TRIGGER t_T1
-BEFORE INSERT ON T1
-FOR EACH ROW
-DECLARE
-    max_value NUMBER;
-BEGIN
-    -- Sélectionner la valeur maximale de T1Id
-    SELECT MAX(T1Id) INTO max_value FROM T1;
-    -- Si la table est vide, initialiser la valeur à 0
-    IF max_value IS NULL THEN
-        :NEW.T1Id := 0;
-    ELSE
-        -- Sinon, incrémenter la valeur maximale de 1
-        :NEW.T1Id := max_value + 1;
-    END IF;
-END;
-/
+drop trigger TRIG_PLAQUE;
+CREATE TRIGGER TRIG_PLAQUE BEFORE INSERT ON PLAQUE FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_PLAQUE.NEXTVAL INTO :new.code_barre_plaque_PLAQUE FROM DUAL ;
 
-BEGIN
-    FOR i IN 1..1000 LOOP
-        INSERT INTO T1 VALUES (NULL); -- Vous n'avez pas besoin de spécifier la valeur de T1Id car le déclencheur se chargera de l'incrémenter automatiquement
-    END LOOP;
-    COMMIT;
-END;
-/
-DROP TRIGGER t_T1;
+ END ;
+
+DECLARE 
+  existe_EQUIPE INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_EQUIPE FROM user_tables WHERE table_name = upper('EQUIPE') ;
+
+  IF existe_EQUIPE > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE EQUIPE CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table equipe;
+CREATE TABLE EQUIPE (id_equipe_EQUIPE INT NOT NULL,
+adresse VARCHAR2(250),
+PRIMARY KEY (id_equipe_EQUIPE));
+
+drop sequence SEQ_EQUIPE;
+CREATE SEQUENCE SEQ_EQUIPE ;
+
+drop trigger TRIG_EQUIPE;
+CREATE TRIGGER TRIG_EQUIPE BEFORE INSERT ON EQUIPE FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_EQUIPE.NEXTVAL INTO :new.id_equipe_EQUIPE FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_FACTURE INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_FACTURE FROM user_tables WHERE table_name = upper('FACTURE') ;
+
+  IF existe_FACTURE > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE FACTURE CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table facture;
+CREATE TABLE FACTURE (
+    id_facture_FACTURE INT NOT NULL,
+    date_facture_FACTURE DATE,
+    cout_facture_FACTURE FLOAT,
+    id_equipe_EQUIPE INT, -- Remplacé "**NOT FOUND**" par "INT"
+    PRIMARY KEY (id_facture_FACTURE)
+);
+
+drop sequence SEQ_FACTURE;
+CREATE SEQUENCE SEQ_FACTURE ;
+
+drop trigger TRIG_FACTURE;
+CREATE TRIGGER TRIG_FACTURE BEFORE INSERT ON FACTURE FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_FACTURE.NEXTVAL INTO :new.id_facture_FACTURE FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_TECHNICIEN INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_TECHNICIEN FROM user_tables WHERE table_name = upper('TECHNICIEN') ;
+
+  IF existe_TECHNICIEN > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE TECHNICIEN CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table technicien;
+CREATE TABLE TECHNICIEN (id_technicien_TECHNICIEN INT NOT NULL,
+etat_technicien_TECHNICIEN VARCHAR2(250),
+PRIMARY KEY (id_technicien_TECHNICIEN));
+
+drop sequence SEQ_TECHNICIEN;
+CREATE SEQUENCE SEQ_TECHNICIEN ;
+
+drop trigger TRIG_TECHNICIEN;
+CREATE TRIGGER TRIG_TECHNICIEN BEFORE INSERT ON TECHNICIEN FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_TECHNICIEN.NEXTVAL INTO :new.id_technicien_TECHNICIEN FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_PUITS INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_PUITS FROM user_tables WHERE table_name = upper('PUITS') ;
+
+  IF existe_PUITS > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE PUITS CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table puits;
+CREATE TABLE PUITS (id_puits_PUITS INT NOT NULL,
+x_puits_PUITS FLOAT,
+y_puits_PUITS FLOAT,
+resultat_puits_PUITS FLOAT,
+x_pixel_PIXEL FLOAT,
+y_pixel_PIXEL FLOAT,
+n_PIXEL INT,
+Rm_PIXEL FLOAT,
+Rd_PIXEL FLOAT,
+Vm_PIXEL FLOAT,
+Vd_PIXEL FLOAT,
+Bm_PIXEL FLOAT,
+Bd_PIXEL FLOAT,
+Tm_PIXEL FLOAT,
+Td_PIXEL FLOAT,
+id_groupe_GROUPE INT, -- Remplacé "**NOT FOUND**" par "INT"
+PRIMARY KEY (id_puits_PUITS));
+
+
+drop sequence SEQ_PUITS;
+CREATE SEQUENCE SEQ_PUITS ;
+
+drop trigger TRIG_PUITS;
+CREATE TRIGGER TRIG_PUITS BEFORE INSERT ON PUITS FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_PUITS.NEXTVAL INTO :new.id_puits_PUITS FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_CHERCHEUR INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_CHERCHEUR FROM user_tables WHERE table_name = upper('CHERCHEUR') ;
+
+  IF existe_CHERCHEUR > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE CHERCHEUR CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table chercheur;
+CREATE TABLE CHERCHEUR (id_chercheur_CHERCHEUR INT NOT NULL,
+id_equipe_EQUIPE INT, -- Remplacé "**NOT FOUND**" par "INT"
+PRIMARY KEY (id_chercheur_CHERCHEUR));
+
+drop sequence SEQ_CHERCHEUR;
+CREATE SEQUENCE SEQ_CHERCHEUR ;
+
+drop trigger TRIG_CHERCHEUR;
+CREATE TRIGGER TRIG_CHERCHEUR BEFORE INSERT ON CHERCHEUR FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_CHERCHEUR.NEXTVAL INTO :new.id_chercheur_CHERCHEUR FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_PHOTOMETRE INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_PHOTOMETRE FROM user_tables WHERE table_name = upper('PHOTOMETRE') ;
+
+  IF existe_PHOTOMETRE > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE PHOTOMETRE CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table PHOTOMETRE;
+CREATE TABLE PHOTOMETRE (id_photometre_PHOTOMETRE INT NOT NULL,
+etat_photometre_PHOTOMETRE VARCHAR2(250),
+PRIMARY KEY (id_photometre_PHOTOMETRE));
+
+drop sequence SEQ_PHOTOMETRE;
+CREATE SEQUENCE SEQ_PHOTOMETRE ;
+
+drop trigger TRIG_PHOTOMETRE;
+CREATE TRIGGER TRIG_PHOTOMETRE BEFORE INSERT ON PHOTOMETRE FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_PHOTOMETRE.NEXTVAL INTO :new.id_photometre_PHOTOMETRE FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_EXPERIENCE INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_EXPERIENCE FROM user_tables WHERE table_name = upper('EXPERIENCE') ;
+
+  IF existe_EXPERIENCE > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE EXPERIENCE CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table experience;
+CREATE TABLE EXPERIENCE (id_exp_EXPERIENCE INT NOT NULL,
+statut_exp_EXPERIENCE VARCHAR2(250),
+nb_prog_EXPERIENCE INT,
+date_debut_EXPERIENCE DATE,
+date_fin_EXPERIENCE DATE,
+date_transmission_resultats_EXPERIENCE DATE,
+cout_exp_EXPERIENCE FLOAT,
+type_exp_EXPERIENCE VARCHAR2(250),
+moyenne_globale_EXPERIENCE FLOAT,
+ecart_type_global_EXPERIENCE FLOAT,
+a1_EXPERIENCE INT,
+a2_EXPERIENCE INT,
+a3_EXPERIENCE INT,
+coef_surcout_EXPERIENCE INT,
+frequence_obs_EXPERIENCE INT,
+date_commande_COMMANDE INT,
+ordre_priorite_COMMANDE INT,
+id_technicien_TECHNICIEN INT, -- Remplacé "**NOT FOUND**" par "INT"
+facture_id_facture_facture INT, -- Remplacé "**NOT FOUND**" par "INT"
+id_chercheur_CHERCHEUR INT, -- Remplacé "**NOT FOUND**" par "INT"
+id_position_ATTENTE INT,
+PRIMARY KEY (id_exp_EXPERIENCE));
+
+drop sequence SEQ_EXPERIENCE;
+CREATE SEQUENCE SEQ_EXPERIENCE ;
+
+drop trigger TRIG_EXPERIENCE;
+CREATE TRIGGER TRIG_EXPERIENCE BEFORE INSERT ON EXPERIENCE FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_EXPERIENCE.NEXTVAL INTO :new.id_exp_EXPERIENCE FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_GROUPE INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_GROUPE FROM user_tables WHERE table_name = upper('GROUPE') ;
+
+  IF existe_GROUPE > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE GROUPE CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table groupe;
+CREATE TABLE GROUPE (id_groupe_GROUPE INT NOT NULL,
+nb_plaques_GROUPE INT,
+moyenne_grp_GROUPE FLOAT,
+ecart_type_grp_GROUPE FLOAT,
+acceptation_GROUPE NUMBER(1),
+x_grp_GROUPE FLOAT,
+y_grp_GROUPE FLOAT,
+code_barre_plaque_PLAQUE VARCHAR2(250),
+id_exp_EXPERIENCE INT,
+PRIMARY KEY (id_groupe_GROUPE));
+
+drop sequence SEQ_GROUPE;
+CREATE SEQUENCE SEQ_GROUPE ;
+
+drop trigger TRIG_GROUPE;
+CREATE TRIGGER TRIG_GROUPE BEFORE INSERT ON GROUPE FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_GROUPE.NEXTVAL INTO :new.id_groupe_GROUPE FROM DUAL ;
+
+ END ;
+
+DECLARE 
+  existe_ATTENTE INTEGER ;
+
+BEGIN 
+  SELECT count(*) INTO existe_ATTENTE FROM user_tables WHERE table_name = upper('ATTENTE') ;
+
+  IF existe_ATTENTE > 0 THEN 
+    EXECUTE IMMEDIATE 'DROP TABLE ATTENTE CASCADE CONSTRAINTS' ;
+
+  END IF ;
+
+END ;
+
+drop table attente;
+CREATE TABLE ATTENTE (id_position_ATTENTE INT NOT NULL,
+position_ATTENTE INT,
+id_photometre_PHOTOMETRE INT, -- Remplacé "**NOT FOUND**" par "INT"
+PRIMARY KEY (id_position_ATTENTE));
+
+drop sequence SEQ_ATTENTE;
+CREATE SEQUENCE SEQ_ATTENTE ;
+
+drop trigger TRIG_ATTENTE;
+CREATE TRIGGER TRIG_ATTENTE BEFORE INSERT ON ATTENTE FOR EACH ROW 
+ BEGIN 
+ SELECT SEQ_ATTENTE.NEXTVAL INTO :new.id_position_ATTENTE FROM DUAL ;
+
+ END ;
+
+ALTER TABLE PLAQUE ADD CONSTRAINT FK_PLAQUE_code_barre_lot_LOT FOREIGN KEY (code_barre_lot_LOT) REFERENCES LOT (code_barre_lot_LOT);
+
+ALTER TABLE FACTURE ADD CONSTRAINT FK_FACTURE_id_equipe_EQUIPE FOREIGN KEY (id_equipe_EQUIPE) REFERENCES EQUIPE (id_equipe_EQUIPE);
+ALTER TABLE PUITS ADD CONSTRAINT FK_PUITS_id_groupe_GROUPE FOREIGN KEY (id_groupe_GROUPE) REFERENCES GROUPE (id_groupe_GROUPE);
+ALTER TABLE CHERCHEUR ADD CONSTRAINT FK_CHERCHEUR_id_equipe_EQUIPE FOREIGN KEY (id_equipe_EQUIPE) REFERENCES EQUIPE (id_equipe_EQUIPE);
+ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_id_technicien_TECHNICIEN FOREIGN KEY (id_technicien_TECHNICIEN) REFERENCES TECHNICIEN (id_technicien_TECHNICIEN);
+ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_facture_id_facture_facture FOREIGN KEY (facture_id_facture_facture) REFERENCES FACTURE (id_facture_FACTURE);
+ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_id_chercheur_CHERCHEUR FOREIGN KEY (id_chercheur_CHERCHEUR) REFERENCES CHERCHEUR (id_chercheur_CHERCHEUR);
+ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_id_position_ATTENTE FOREIGN KEY (id_position_ATTENTE) REFERENCES ATTENTE (id_position_ATTENTE);
+ALTER TABLE GROUPE ADD CONSTRAINT FK_GROUPE_code_barre_plaque_PLAQUE FOREIGN KEY (code_barre_plaque_PLAQUE) REFERENCES PLAQUE (code_barre_plaque_PLAQUE);
+ALTER TABLE GROUPE ADD CONSTRAINT FK_GROUPE_id_exp_EXPERIENCE FOREIGN KEY (id_exp_EXPERIENCE) REFERENCES EXPERIENCE (id_exp_EXPERIENCE);
+ALTER TABLE ATTENTE ADD CONSTRAINT FK_ATTENTE_id_photometre_PHOTOMETRE FOREIGN KEY (id_photometre_PHOTOMETRE) REFERENCES PHOTOMETRE (id_photometre_PHOTOMETRE);
+
+
