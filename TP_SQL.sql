@@ -48,7 +48,7 @@ END ;
 
 drop table plaque;
 CREATE TABLE PLAQUE (
-    code_barre_plaque_PLAQUE VARCHAR2(250) NOT NULL,
+    code_barre_plaque_PLAQUE int NOT NULL,
     code_barre_lot_LOT INT, -- Remplacé "NOT FOUND" par "INT"
     PRIMARY KEY (code_barre_plaque_PLAQUE)
 );
@@ -279,7 +279,7 @@ a2_EXPERIENCE INT,
 a3_EXPERIENCE INT,
 coef_surcout_EXPERIENCE INT,
 frequence_obs_EXPERIENCE INT,
-date_commande_COMMANDE INT,
+date_commande_COMMANDE DATE,
 ordre_priorite_COMMANDE INT,
 id_technicien_TECHNICIEN INT, -- Remplacé "**NOT FOUND**" par "INT"
 facture_id_facture_facture INT, -- Remplacé "**NOT FOUND**" par "INT"
@@ -318,7 +318,7 @@ ecart_type_grp_GROUPE FLOAT,
 acceptation_GROUPE NUMBER(1),
 x_grp_GROUPE FLOAT,
 y_grp_GROUPE FLOAT,
-code_barre_plaque_PLAQUE VARCHAR2(250),
+code_barre_plaque_PLAQUE int,
 id_exp_EXPERIENCE INT,
 PRIMARY KEY (id_groupe_GROUPE));
 
@@ -374,4 +374,82 @@ ALTER TABLE GROUPE ADD CONSTRAINT FK_GROUPE_code_barre_plaque_PLAQUE FOREIGN KEY
 ALTER TABLE GROUPE ADD CONSTRAINT FK_GROUPE_id_exp_EXPERIENCE FOREIGN KEY (id_exp_EXPERIENCE) REFERENCES EXPERIENCE (id_exp_EXPERIENCE);
 ALTER TABLE ATTENTE ADD CONSTRAINT FK_ATTENTE_id_photometre_PHOTOMETRE FOREIGN KEY (id_photometre_PHOTOMETRE) REFERENCES PHOTOMETRE (id_photometre_PHOTOMETRE);
 
-------blalal
+-- Peuplement de la table LOT
+INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock) 
+VALUES (96, TO_DATE('2024-03-15', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 100, 80);
+
+-- Peuplement de la table PLAQUE
+INSERT INTO PLAQUE (code_barre_lot_LOT)
+VALUES ((SELECT code_barre_lot_LOT FROM LOT WHERE rownum = 1));
+
+-- Peuplement de la table EQUIPE
+INSERT INTO EQUIPE (adresse) 
+VALUES ('Université de Poitiers');
+
+-- Peuplement de la table FACTURE
+INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
+VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE rownum = 1));
+
+-- Peuplement de la table TECHNICIEN
+INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) 
+VALUES ('libre');
+
+-- Peuplement de la table CHERCHEUR
+INSERT INTO CHERCHEUR (id_equipe_EQUIPE) 
+VALUES ((SELECT id_equipe_EQUIPE FROM EQUIPE WHERE rownum = 1));
+
+-- Peuplement de la table PHOTOMETRE
+INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) 
+VALUES ('vide');
+
+-- Peuplement de la table ATTENTE
+INSERT INTO ATTENTE (position_ATTENTE, id_photometre_PHOTOMETRE) 
+VALUES (1, (SELECT id_photometre_PHOTOMETRE FROM PHOTOMETRE WHERE rownum = 1));
+
+-- Peuplement de la table EXPERIENCE
+INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE, nb_prog_EXPERIENCE, date_debut_EXPERIENCE, date_fin_EXPERIENCE, date_transmission_resultats_EXPERIENCE, cout_exp_EXPERIENCE, type_exp_EXPERIENCE, moyenne_globale_EXPERIENCE, ecart_type_global_EXPERIENCE, a1_EXPERIENCE, a2_EXPERIENCE, a3_EXPERIENCE, coef_surcout_EXPERIENCE, frequence_obs_EXPERIENCE, date_commande_COMMANDE, ordre_priorite_COMMANDE, id_technicien_TECHNICIEN, facture_id_facture_facture, id_chercheur_CHERCHEUR, id_position_ATTENTE) 
+VALUES ('en cours', 2, TO_DATE('2024-03-15', 'YYYY-MM-DD'), TO_DATE('2024-03-20', 'YYYY-MM-DD'), TO_DATE('2024-03-22', 'YYYY-MM-DD'), 300.00, 'colorimétrique', 150.0, 25.0, 1, 2, 3, 2, 10, TO_DATE('2024-03-20', 'YYYY-MM-DD'), 1, (SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE rownum = 1), (SELECT id_facture_FACTURE FROM FACTURE WHERE rownum = 1), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE rownum = 1), (SELECT id_position_ATTENTE FROM ATTENTE WHERE rownum = 1));
+
+-- Peuplement de la table GROUPE
+INSERT INTO GROUPE (nb_plaques_GROUPE, moyenne_grp_GROUPE, ecart_type_grp_GROUPE, acceptation_GROUPE, x_grp_GROUPE, y_grp_GROUPE, code_barre_plaque_PLAQUE, id_exp_EXPERIENCE) 
+VALUES (2, 120.0, 15.0, 1, 3.0, 4.0, (SELECT code_barre_plaque_PLAQUE FROM PLAQUE WHERE rownum = 1), (SELECT id_exp_EXPERIENCE FROM EXPERIENCE WHERE rownum = 1));
+
+-- Peuplement de la table PUITS
+INSERT INTO PUITS (x_puits_PUITS, y_puits_PUITS, resultat_puits_PUITS, x_pixel_PIXEL, y_pixel_PIXEL, n_PIXEL, Rm_PIXEL, Rd_PIXEL, Vm_PIXEL, Vd_PIXEL, Bm_PIXEL, Bd_PIXEL, Tm_PIXEL, Td_PIXEL, id_groupe_GROUPE) 
+VALUES (1.0, 2.0, 3.0, 10.0, 20.0, 30, 40.0, 50.0, 60.0, 70.0, 250.0, 90.0, 100.0, 110.0, (SELECT id_groupe_GROUPE FROM GROUPE WHERE rownum = 1));
+
+
+
+
+
+
+
+ALTER TABLE LOT
+ADD CONSTRAINT CHK_TypePlaque CHECK (type_plaque_LOT IN (96, 384));
+
+ALTER TABLE TECHNICIEN
+ADD CONSTRAINT CHK_EtatTechnicien CHECK (etat_technicien_TECHNICIEN IN ('libre', 'occupé'));
+
+ALTER TABLE EXPERIENCE
+ADD CONSTRAINT CHK_EtatExperience CHECK (TYPE_EXP_EXPERIENCE IN ('colorimétrique','opacimétrique'));
+
+ALTER TABLE PUITS
+ADD CONSTRAINT CHK_ValCouleurs CHECK (
+    Rm_PIXEL >= 0 AND Rm_PIXEL <= 255 AND
+    Rd_PIXEL >= 0 AND Rd_PIXEL <= 255 AND
+    Vm_PIXEL >= 0 AND Vm_PIXEL <= 255 AND
+    Vd_PIXEL >= 0 AND Vd_PIXEL <= 255 AND
+    Bm_PIXEL >= 0 AND Bm_PIXEL <= 255 AND
+    Bd_PIXEL >= 0 AND Bd_PIXEL <= 255 AND
+    Tm_PIXEL >= 0 AND Tm_PIXEL <= 255 AND
+    Td_PIXEL >= 0 AND Td_PIXEL <= 255
+);
+
+ALTER TABLE PHOTOMETRE
+ADD CONSTRAINT CHK_EtatPhotometre CHECK (etat_photometre_PHOTOMETRE IN ('vide', 'occupé', 'en panne'));
+
+ALTER TABLE EXPERIENCE
+ADD CONSTRAINT CHK_EtatExperience CHECK (statut_exp_EXPERIENCE IN ('en cours', 'en attente', 'effectuée', 'ratée'));
+
+ALTER TABLE EXPERIENCE
+ADD CONSTRAINT CHK_OrdrePriorite CHECK (ORDRE_PRIORITE_COMMANDE BETWEEN 1 AND 5);
