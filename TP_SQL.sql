@@ -419,11 +419,6 @@ INSERT INTO PUITS (x_puits_PUITS, y_puits_PUITS, resultat_puits_PUITS, x_pixel_P
 VALUES (1.0, 2.0, 3.0, 10.0, 20.0, 30, 40.0, 50.0, 60.0, 70.0, 250.0, 90.0, 100.0, 110.0, (SELECT id_groupe_GROUPE FROM GROUPE WHERE rownum = 1));
 
 
-
-
-
-
-
 ALTER TABLE LOT
 ADD CONSTRAINT CHK_TypePlaque CHECK (type_plaque_LOT IN (96, 384));
 
@@ -445,6 +440,24 @@ ADD CONSTRAINT CHK_ValCouleurs CHECK (
     Td_PIXEL >= 0 AND Td_PIXEL <= 255
 );
 
+CREATE OR REPLACE TRIGGER TRG_CheckTransmissionExperience
+BEFORE UPDATE ON EXPERIENCE
+FOR EACH ROW
+DECLARE
+    v_tech_state VARCHAR2(50);
+BEGIN
+    IF :new.statut_exp_EXPERIENCE = 'ratée' THEN
+        SELECT etat_technicien_TECHNICIEN INTO v_tech_state
+        FROM TECHNICIEN
+        WHERE id_technicien_TECHNICIEN = :new.id_technicien_TECHNICIEN;
+
+        IF v_tech_state != 'libre' THEN
+            RAISE_APPLICATION_ERROR(-20001, 'Le technicien en charge n''est pas libre pour transmettre l''expérience.');
+        END IF;
+    END IF;
+END;
+/
+
 ALTER TABLE PHOTOMETRE
 ADD CONSTRAINT CHK_EtatPhotometre CHECK (etat_photometre_PHOTOMETRE IN ('vide', 'occupé', 'en panne'));
 
@@ -453,3 +466,25 @@ ADD CONSTRAINT CHK_EtatExperience CHECK (statut_exp_EXPERIENCE IN ('en cours', '
 
 ALTER TABLE EXPERIENCE
 ADD CONSTRAINT CHK_OrdrePriorite CHECK (ORDRE_PRIORITE_COMMANDE BETWEEN 1 AND 5);
+
+CREATE OR REPLACE TRIGGER TRG_GROUPE_Refus
+AFTER UPDATE OF acceptation_GROUPE ON GROUPE
+FOR EACH ROW
+BEGIN
+    IF :new.acceptation_GROUPE = 0 THEN
+        UPDATE EXPERIENCE
+        SET statut_exp_EXPERIENCE = 'ratée'
+        WHERE id_exp_EXPERIENCE = : new.id_groupe_GROUPE;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER TRG_LOT_Rachat
+BEFORE UPDATE OF stock_actuel_stock ON LOT
+FOR EACH ROW
+BEGIN
+    IF :new.stock_actuel_stock < :old.stock_precedent_stock THEN
+        :new.stock_actuel_stock := :old.stock_actuel_stock + :new.stock_precedent_stock;
+    END IF;
+END;
+/
