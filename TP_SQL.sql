@@ -488,3 +488,34 @@ BEGIN
     END IF;
 END;
 /
+
+CREATE OR REPLACE TRIGGER trg_plaque_insert
+AFTER INSERT ON LOT
+FOR EACH ROW
+DECLARE
+    l_lot_id NUMBER;
+BEGIN
+  l_lot_id := :new.code_barre_lot_LOT;
+  FOR i IN 1..80 LOOP
+    INSERT INTO PLAQUE (code_barre_plaque_PLAQUE, code_barre_lot_LOT)
+    VALUES (SEQ_PLAQUE.NEXTVAL, l_lot_id);
+  END LOOP;
+END;
+/
+
+CREATE OR REPLACE TRIGGER T_puits_transparence
+AFTER INSERT OR UPDATE ON EXPERIENCE
+FOR EACH ROW
+BEGIN
+    IF :NEW.statut_exp_EXPERIENCE = 'colorimétrique' THEN
+        UPDATE PUITS
+        SET Tm_PIXEL = NULL,
+            Td_PIXEL = NULL
+        WHERE id_groupe_GROUPE IN (
+            SELECT id_groupe_GROUPE
+            FROM GROUPE
+            WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
+        );
+    END IF;
+END;
+/
