@@ -536,3 +536,54 @@ BEGIN
     :NEW.stock_actuel_Stock := l_stock_actuel + 80;
 END;
 /
+
+CREATE OR REPLACE TRIGGER TRG_ReduireFileAttente
+AFTER UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
+FOR EACH ROW
+BEGIN
+    -- Vérifier si l'expérience est passée à l'état "effectuée"
+    IF :new.statut_exp_EXPERIENCE = 'effectuée' THEN
+        -- Réduire la position dans la file d'attente du photomètre associé à cette expérience
+        UPDATE ATTENTE
+        SET position_ATTENTE = position_ATTENTE - 1
+        WHERE id_position_ATTENTE = :new.id_position_ATTENTE
+        AND position_ATTENTE > 0; -- Assurez-vous que la position ne devient pas négative
+    END IF;
+END;
+/
+
+
+
+INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE)
+VALUES ('vide');
+
+INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE)
+VALUES ('vide');
+
+INSERT INTO ATTENTE (position_ATTENTE, id_photometre_PHOTOMETRE)
+VALUES (1, (SELECT id_photometre_PHOTOMETRE FROM PHOTOMETRE WHERE id_photometre_PHOTOMETRE = 48)); 
+
+INSERT INTO ATTENTE (position_ATTENTE, id_photometre_PHOTOMETRE)
+VALUES (1, (SELECT id_photometre_PHOTOMETRE FROM PHOTOMETRE WHERE id_photometre_PHOTOMETRE = 49));
+
+INSERT INTO ATTENTE (position_ATTENTE, id_photometre_PHOTOMETRE)
+VALUES (2, (SELECT id_photometre_PHOTOMETRE FROM PHOTOMETRE WHERE id_photometre_PHOTOMETRE = 49));
+
+-- Insérez une expérience en attente associée au photomètre 1
+INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE, id_position_ATTENTE)
+VALUES ('en attente', (SELECT id_position_ATTENTE FROM ATTENTE WHERE position_ATTENTE = 1 AND id_photometre_PHOTOMETRE = 48));
+
+-- Insérez une expérience en attente associée au photomètre 2
+INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE, id_position_ATTENTE)
+VALUES ('en attente', (SELECT id_position_ATTENTE FROM ATTENTE WHERE position_ATTENTE = 2 AND id_photometre_PHOTOMETRE = 49));
+
+-- Insérez une expérience effectuée associée au photomètre 1
+INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE, id_position_ATTENTE)
+VALUES ('en attente', (SELECT id_position_ATTENTE FROM ATTENTE WHERE position_ATTENTE = 1 AND id_photometre_PHOTOMETRE = 49));
+
+UPDATE EXPERIENCE
+SET statut_exp_EXPERIENCE = 'effectuée'
+WHERE id_exp_experience = 56 
+AND statut_exp_EXPERIENCE = 'en attente';
+
+
