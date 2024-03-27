@@ -157,6 +157,132 @@ EXCEPTION
 END;
 /
 
+CREATE OR REPLACE PROCEDURE TestTypePlaquePositif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO LOT (type_plaque_LOT) VALUES ('96');
+    INSERT INTO LOT (type_plaque_LOT) VALUES ('384');
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    INSERT INTO TraceTest VALUES ('TestTypePlaquePositif ', 'ok');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a rate
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestTypePlaquePositif ', 'faux');
+        COMMIT;
+END;
+/
+
+
+CREATE OR REPLACE PROCEDURE TestTypePlaqueNegatif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO LOT (type_plaque_LOT) VALUES ('49');
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
+    INSERT INTO TraceTest VALUES ('TestTypePlaqueNegatif', 'faux');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a reussis
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestTypePlaqueNegatif', 'ok');
+        COMMIT;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE TestOrdrePrioritePositif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO Experience (ordre_priorite_commande) VALUES ('4');
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    INSERT INTO TraceTest VALUES ('TestOrdrePrioritePositif ', 'ok');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a rate
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestOrdrePrioritePositif ', 'faux');
+        COMMIT;
+END;
+/
+
+
+CREATE OR REPLACE PROCEDURE TestOrdrePrioriteNegatif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO Experience (ordre_priorite_commande) VALUES ('0');
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
+    INSERT INTO TraceTest VALUES ('TestOrdrePrioriteNegatif', 'faux');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a reussis
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestOrdrePrioriteNegatif', 'ok');
+        COMMIT;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE TestValCouleurPositif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO Puits (RM_pixel) VALUES ('111');
+    INSERT INTO Puits (RD_pixel) VALUES ('111');
+    INSERT INTO Puits (VM_pixel) VALUES ('111');
+    INSERT INTO Puits (VD_pixel) VALUES ('111');
+    INSERT INTO Puits (BM_pixel) VALUES ('111');
+    INSERT INTO Puits (BD_pixel) VALUES ('111');
+    INSERT INTO Puits (TM_pixel) VALUES ('111');
+    INSERT INTO Puits (TD_pixel) VALUES ('111');
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    INSERT INTO TraceTest VALUES ('TestValCouleurPositif ', 'ok');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a rate
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestValCouleurPositif', 'faux');
+        COMMIT;
+END;
+/
+
+
+CREATE OR REPLACE PROCEDURE TestValCouleurNegatif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO Puits (RM_pixel) VALUES ('444');
+    INSERT INTO Puits (RD_pixel) VALUES ('444');
+    INSERT INTO Puits (VM_pixel) VALUES ('444');
+    INSERT INTO Puits (VD_pixel) VALUES ('444');
+    INSERT INTO Puits (BM_pixel) VALUES ('444');
+    INSERT INTO Puits (BD_pixel) VALUES ('444');
+    INSERT INTO Puits (TM_pixel) VALUES ('444');
+    INSERT INTO Puits (TD_pixel) VALUES ('444');
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
+    INSERT INTO TraceTest VALUES ('TestValCouleurNegatif', 'faux');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a reussis
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestValCouleurNegatif', 'ok');
+        COMMIT;
+END;
+/
+
 BEGIN
     TestEtatPhotometreNegatif;
     TestEtatPhotometrePositif;
@@ -166,5 +292,11 @@ BEGIN
     TestTypeExperienceNegatif;
     TestEtatTechnicienPositif;
     TestEtatTechnicienNegatif;
+    TestTypePlaquePositif;
+    TestTypePlaqueNegatif;
+    TestOrdrePrioritePositif;
+    TestOrdrePrioriteNegatif;
+    TestValCouleurPositif;
+    TestValCouleurNegatif;
 END;
 /
