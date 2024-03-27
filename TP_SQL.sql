@@ -515,6 +515,28 @@ BEGIN
     END IF;
 END;
 /
+
+CREATE OR REPLACE TRIGGER trg_maj_stock
+BEFORE INSERT ON LOT
+FOR EACH ROW
+DECLARE
+    l_stock_actuel NUMBER;
+BEGIN
+    -- Sélectionner le stock actuel de l'avant-dernier lot
+    SELECT stock_actuel_Stock
+    INTO l_stock_actuel
+    FROM (
+        SELECT stock_actuel_Stock
+        FROM LOT
+        ORDER BY date_livraison_LOT DESC
+    )
+    WHERE ROWNUM <= 1;
+
+    -- Mettre à jour le stock actuel du nouveau lot
+    :NEW.stock_actuel_Stock := l_stock_actuel + 80;
+END;
+/
+
 CREATE OR REPLACE TRIGGER TRG_ReduireFileAttente
 AFTER UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
@@ -563,3 +585,5 @@ UPDATE EXPERIENCE
 SET statut_exp_EXPERIENCE = 'effectuée'
 WHERE id_exp_experience = 56 
 AND statut_exp_EXPERIENCE = 'en attente';
+
+
