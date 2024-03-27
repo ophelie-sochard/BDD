@@ -382,7 +382,7 @@ ALTER TABLE TECHNICIEN
 ADD CONSTRAINT CHK_EtatTechnicien CHECK (etat_technicien_TECHNICIEN IN ('libre', 'occupé'));
 
 ALTER TABLE EXPERIENCE
-ADD CONSTRAINT CHK_EtatExperience CHECK (TYPE_EXP_EXPERIENCE IN ('colorimétrique','opacimétrique'));
+ADD CONSTRAINT CHK_TypeExperience CHECK (TYPE_EXP_EXPERIENCE IN ('colorimétrique','opacimétrique'));
 
 ALTER TABLE PUITS
 ADD CONSTRAINT CHK_ValCouleurs CHECK (
