@@ -7,17 +7,17 @@ CREATE TABLE TRACETEST (
 
 CREATE OR REPLACE PROCEDURE TestEtatPhotometrePositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnï¿½es valides
+    -- Tentative d'insertion de données valides
     INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('vide');
-    INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('occupï¿½');
+    INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('occupé');
     INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('en panne');
     rollback;
-    -- Si l'insertion rï¿½ussit, affiche un message indiquant que le test est rï¿½ussi
+    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
     INSERT INTO TRACETEST VALUES ('TestEtatPhotometrePositif', 'ok');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a ï¿½chouï¿½
+    -- Si une erreur se produit, affiche un message indiquant que le test a rate
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TRACETEST VALUES ('TestEtatPhotometrePositif', 'faux');
@@ -26,15 +26,15 @@ END;
 /
 CREATE OR REPLACE PROCEDURE TestEtatPhotometreNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnï¿½es valides
+    -- Tentative d'insertion de données valides
     INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('vide');
     rollback;
-    -- Si l'insertion rï¿½ussit, affiche un message indiquant que le test est ratï¿½
+    -- Si l'insertion réussit, affiche un message indiquant que le test est réussis
     INSERT INTO TRACETEST VALUES ('TestEtatPhotometreNegatif', 'faux');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a rï¿½ussi
+    -- Si une erreur se produit, affiche un message indiquant que le test a réussi
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TRACETEST VALUES ('TestEtatPhotometreNegatif', 'ok');
@@ -44,18 +44,18 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestEtatExperiencePositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnï¿½es valides
+    -- Tentative d'insertion de donnéees valides
     INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('en cours');
     INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('en attente');
-    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('effectuï¿½e');
-    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('ratï¿½e');
+    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('effectuée');
+    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('ratée');
     rollback;
-    -- Si l'insertion rï¿½ussit, affiche un message indiquant que le test est rï¿½ussi
+    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
     INSERT INTO TRACETEST VALUES ('TestEtatExperiencePositif', 'ok');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a ï¿½chouï¿½
+    -- Si une erreur se produit, affiche un message indiquant que le test a echoue
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TRACETEST VALUES ('TestEtatExperiencePositif', 'faux');
@@ -65,15 +65,15 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestEtatExperienceNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnï¿½es valides
+    -- Tentative d'insertion de donnéees valides
     INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('vide');
     rollback;
-    -- Si l'insertion rï¿½ussit, affiche un message indiquant que le test est ratï¿½
+    -- Si l'insertion réussit, affiche un message indiquant que le test est raté
     INSERT INTO TRACETEST VALUES ('TestEtatExperienceNegatif', 'faux');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a rï¿½ussi
+    -- Si une erreur se produit, affiche un message indiquant que le test a reussis
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TRACETEST VALUES ('TestEtatExperienceNegatif', 'ok');
@@ -81,18 +81,36 @@ EXCEPTION
 END;
 /
 
+CREATE OR REPLACE PROCEDURE TestTypeExperiencePositif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('colorimétrique');
+    INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('opacimétrique');
+
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est réussi
+    INSERT INTO TRACETEST VALUES ('TestTypeExperiencePositif', 'ok');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a échoué
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TRACETEST VALUES ('TestTypeExperiencePositif', 'faux');
+
+
 CREATE OR REPLACE PROCEDURE TestEtatTechnicienPositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnÃ©es valides
+    -- Tentative d'insertion de données valides
     INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('libre');
-    INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('occupÃ©');
+    INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('occupé');
     rollback;
-    -- Si l'insertion rÃ©ussit, affiche un message indiquant que le test est rÃ©ussi
+    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
     INSERT INTO TraceTest VALUES ('TestEtatTechnicienPositif', 'ok');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a Ã©chouÃ©
+    -- Si une erreur se produit, affiche un message indiquant que le test a rate
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TraceTest VALUES ('TestEtatTechnicienPositif', 'faux');
@@ -100,17 +118,35 @@ EXCEPTION
 END;
 /
 
+CREATE OR REPLACE PROCEDURE TestTypeExperienceNegatif deterministic AS
+BEGIN
+    -- Tentative d'insertion de données valides
+    INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('vide');
+    rollback;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est raté
+    INSERT INTO TRACETEST VALUES ('TestTypeExperienceNegatif', 'faux');
+    COMMIT;
+
+EXCEPTION
+    -- Si une erreur se produit, affiche un message indiquant que le test a réussi
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TRACETEST VALUES ('TestTypeExperienceNegatif', 'ok');
+        COMMIT;
+END;
+/
+
 CREATE OR REPLACE PROCEDURE TestEtatTechnicienNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnÃ©es valides
+    -- Tentative d'insertion de données valides
     INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('??');
     rollback;
-    -- Si l'insertion rÃ©ussit, affiche un message indiquant que le test est rÃ©ussi
+    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
     INSERT INTO TraceTest VALUES ('TestEtatTechnicienPositif', 'faux');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a Ã©chouÃ©
+    -- Si une erreur se produit, affiche un message indiquant que le test a reussis
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TraceTest VALUES ('TestEtatTechnicienPositif', 'ok');
@@ -123,6 +159,10 @@ BEGIN
     TestEtatPhotometrePositif;
     TestEtatExperiencePositif;
     TestEtatExperienceNegatif;
+
+    TestTypeExperiencePositif;
+    TestTypeExperienceNegatif;
+
     TestEtatTechnicienPositif;
     TestEtatTechnicienNegatif;
 END;
