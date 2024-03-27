@@ -168,7 +168,7 @@ drop table puits;
 CREATE TABLE PUITS (id_puits_PUITS INT NOT NULL,
 x_puits_PUITS FLOAT,
 y_puits_PUITS FLOAT,
-resultat_puits_PUITS FLOAT,
+resultat_puits_PUITS VARCHAR2(250),
 x_pixel_PIXEL FLOAT,
 y_pixel_PIXEL FLOAT,
 n_PIXEL INT,
@@ -503,11 +503,12 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE TRIGGER T_puits_transparence
+CREATE OR REPLACE TRIGGER TRG_puits_colorimetrie
 AFTER INSERT OR UPDATE ON EXPERIENCE
 FOR EACH ROW
 BEGIN
     IF :NEW.statut_exp_EXPERIENCE = 'colorimétrique' THEN
+        -- Mise à jour des champs Tm_PIXEL et Td_PIXEL à NULL dans PUITS
         UPDATE PUITS
         SET Tm_PIXEL = NULL,
             Td_PIXEL = NULL
@@ -516,6 +517,45 @@ BEGIN
             FROM GROUPE
             WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
         );
+
+        -- Vérification des conditions pour définir le resultat_puits à 'violet' ou 'jaune'
+        IF (:NEW.Rm_EXPERIENCE BETWEEN 118 AND 138 OR :NEW.Rm_EXPERIENCE BETWEEN 228 AND 248) AND
+           (:NEW.Vm_EXPERIENCE BETWEEN 0 AND 20 OR :NEW.Vm_EXPERIENCE BETWEEN 120 AND 140) AND
+           (:NEW.Bm_EXPERIENCE BETWEEN 118 AND 138 OR :NEW.Bm_EXPERIENCE BETWEEN 218 AND 238) THEN
+            :NEW.resultat_puits_PUITS := 'violet';
+        ELSIF (:NEW.Rm_EXPERIENCE BETWEEN 245 AND 255) AND
+              (:NEW.Vm_EXPERIENCE BETWEEN 245 AND 255) AND
+              (:NEW.Bm_EXPERIENCE BETWEEN 41 AND 61) THEN
+            :NEW.resultat_puits_PUITS := 'jaune';
+        END IF;
+    END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER TRG_puits_opacimetrie
+AFTER INSERT OR UPDATE ON EXPERIENCE
+FOR EACH ROW
+BEGIN
+    IF :NEW.statut_exp_EXPERIENCE = 'opacimétrique' THEN
+        -- Mise à jour des champs Tm_PIXEL et Td_PIXEL à NULL dans PUITS
+        UPDATE PUITS
+        SET Rm_PIXEL = NULL,
+            Rd_PIXEL = NULL,
+            Vm_PIXEL = NULL,
+            Vd_PIXEL = NULL,
+            Bm_PIXEL = NULL,
+            Bd_PIXEL = NULL
+        WHERE id_groupe_GROUPE IN (
+            SELECT id_groupe_GROUPE
+            FROM GROUPE
+            WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
+        );
+
+        IF :NEW.Tm_EXPERIENCE >= 125 THEN
+            :NEW.resultat_puits_PUITS := 'opaque';
+        ELSE
+            :NEW.resultat_puits_PUITS := 'transparent';
+        END IF;
     END IF;
 END;
 /
