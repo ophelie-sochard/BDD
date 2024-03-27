@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 DROP TABLE TRACETEST;
 
 CREATE TABLE TRACETEST (
@@ -336,5 +335,4 @@ BEGIN
     TestEtatTechnicienPositif;
     TestEtatTechnicienNegatif;
 END;
->>>>>>> 88f2ad2ff6b92f1af2bb7e45a02c62dfdaa76195
 /
