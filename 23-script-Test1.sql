@@ -330,3 +330,5 @@ BEGIN
 END;
 /
 
+call TestInsertLot();
+
