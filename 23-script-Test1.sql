@@ -336,6 +336,7 @@ EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TraceTest VALUES ('TestTriggerLotRachat', 'faux');
+        RAISE_APPLICATION_ERROR(-20001, 'Le test a échoué : Aucun lot n''a été racheté');
         ROLLBACK;
 END;
 /
