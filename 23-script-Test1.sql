@@ -357,5 +357,6 @@ BEGIN
     TestValCouleurPositif;
     TestValCouleurNegatif;
     TestInsertLot;
+    TestTriggerLotRachat;
 END;
 /
