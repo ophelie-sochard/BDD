@@ -283,6 +283,34 @@ EXCEPTION
 END;
 /
 
+CREATE OR REPLACE PROCEDURE TestInsertLot deterministic AS
+    v_initial_plaque_count NUMBER;
+    v_final_plaque_count NUMBER;
+    v_lot_id NUMBER;
+BEGIN
+    -- Nombre initial de plaques
+    SELECT COUNT(*) INTO v_initial_plaque_count FROM PLAQUE;
+    -- Insertion d'un lot
+    INSERT INTO LOT (code_barre_lot_LOT) VALUES (14569);
+    -- Récupération de l'id du lot
+    SELECT code_barre_lot_LOT INTO v_lot_id FROM LOT WHERE ROWNUM = 1 ORDER BY code_barre_lot_LOT DESC;
+    -- Nombre final de plaques
+    SELECT COUNT(*) INTO v_final_plaque_count FROM PLAQUE;
+    
+    IF v_final_plaque_count = v_initial_plaque_count + 80 THEN
+        rollback;
+        INSERT INTO TraceTest VALUES ('TestInsertLot', 'ok');
+        COMMIT;
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestInsertLot', 'faux');
+        COMMIT;
+END;
+/
+
+
 BEGIN
     TestEtatPhotometreNegatif;
     TestEtatPhotometrePositif;
@@ -298,5 +326,8 @@ BEGIN
     TestOrdrePrioriteNegatif;
     TestValCouleurPositif;
     TestValCouleurNegatif;
+    TestInsertLot;
 END;
 /
+
+call TestInsertLot();
