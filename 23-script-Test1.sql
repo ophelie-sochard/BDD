@@ -306,10 +306,39 @@ EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TraceTest VALUES ('TestInsertLot', 'faux');
+        RAISE_APPLICATION_ERROR(-20001, 'Le test a échoué : Le nombre de plaques n''a pas augmenté de 80 après l''insertion du lot.');
         COMMIT;
 END;
 /
 
+CREATE OR REPLACE PROCEDURE TestTriggerLotRachat deterministic AS
+    v_old_stock_precedent_stock NUMBER;
+    v_new_stock_precedent_stock NUMBER;
+    v_new_stock_actuel_stock NUMBER;
+BEGIN
+    -- Insérer un nouveau lot
+    INSERT INTO LOT (stock_precedent_stock, stock_actuel_stock) VALUES (100, 120);
+    -- Récupérer les valeurs avant la maj
+    SELECT stock_precedent_stock, stock_actuel_stock INTO v_old_stock_precedent_stock, v_new_stock_actuel_stock
+    FROM LOT WHERE ROWNUM = 1 ORDER BY code_barre_lot_LOT DESC;
+    -- Mettre à jour le stock actuel
+    UPDATE LOT SET stock_actuel_stock = 90 WHERE ROWNUM = 1;
+    -- Récupérer les nouvelles valeurs après la maj
+    SELECT stock_precedent_stock, stock_actuel_stock INTO v_new_stock_precedent_stock, v_new_stock_actuel_stock
+    FROM LOT WHERE ROWNUM = 1 ORDER BY code_barre_lot_LOT DESC;
+
+    IF v_new_stock_actuel_stock > v_old_stock_precedent_stock THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestTriggerLotRachat', 'ok');
+    END IF;
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestTriggerLotRachat', 'faux');
+        ROLLBACK;
+END;
+/
 
 BEGIN
     TestEtatPhotometreNegatif;
@@ -329,4 +358,3 @@ BEGIN
     TestInsertLot;
 END;
 /
-
