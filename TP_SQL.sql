@@ -322,6 +322,8 @@ code_barre_plaque_PLAQUE int,
 id_exp_EXPERIENCE INT,
 PRIMARY KEY (id_groupe_GROUPE));
 
+ALTER TABLE GROUPE ADD nb_slots_groupe INT;
+
 drop sequence SEQ_GROUPE;
 CREATE SEQUENCE SEQ_GROUPE ;
 
@@ -573,5 +575,52 @@ BEGIN
     END IF;
 END;
 /
+
+
+CREATE OR REPLACE TRIGGER TRG_CalculNbPlaques
+BEFORE INSERT OR UPDATE ON GROUPE
+FOR EACH ROW
+DECLARE
+    v_nb_plaques INT;
+    v_nb_slots INT := :NEW.nb_slots_groupe;
+    v_type_plaque INT;
+BEGIN
+    -- Récupérer le type de plaque de l'expérience associée au groupe
+    SELECT type_plaque_LOT INTO v_type_plaque
+    FROM LOT
+    WHERE code_barre_lot_LOT = (
+        SELECT code_barre_lot_LOT
+        FROM PLAQUE
+        WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE
+    );
+
+    -- Calculer le nombre de plaques nécessaires en fonction du type de plaque
+    IF v_type_plaque = 96 THEN
+        v_nb_plaques := CEIL(v_nb_slots / 96.0);
+    ELSIF v_type_plaque = 384 THEN
+        v_nb_plaques := CEIL(v_nb_slots / 384.0);
+    ELSE
+        -- Si le type de plaque n'est ni 96 ni 384, lever une erreur
+        RAISE_APPLICATION_ERROR(-20001, 'Type de plaque invalide. Seuls les types de plaque 96 et 384 sont pris en charge.');
+    END IF;
+
+    -- Mettre à jour le nombre de plaques dans le groupe
+    :NEW.nb_plaques_GROUPE := v_nb_plaques;
+END;
+/
+
+
+-- Insertion d'un nouveau lot avec les détails spécifiés
+INSERT INTO LOT ( type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock)
+VALUES (96, TO_DATE('2024-03-27', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0, 80);
+
+-- Insertion d'une nouvelle plaque avec un code-barres spécifié
+INSERT INTO PLAQUE ( code_barre_lot_LOT)
+VALUES (83);
+
+-- Insertion d'un nouveau groupe avec un nombre de slots spécifié
+INSERT INTO GROUPE ( nb_slots_groupe, code_barre_plaque_PLAQUE, id_exp_EXPERIENCE)
+VALUES (150, 81, 81);
+
 
 
