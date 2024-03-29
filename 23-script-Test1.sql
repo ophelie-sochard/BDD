@@ -398,6 +398,58 @@ END;
 
 call test_changement_technicien();
 
+CREATE OR REPLACE PROCEDURE TestTriggerCalculNbPlaques deterministic AS
+    v_nb_plaques INT;
+    v_type_plaque INT;
+    v_nb_slots INT;
+BEGIN
+    -- Insérer un nouveau lot avec un type de plaque de 96
+    INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock)
+    VALUES (96, TO_DATE('2024-03-27', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0, 80);
+
+    -- Insertion d'une nouvelle plaque avec un code-barres spécifié
+    INSERT INTO PLAQUE (code_barre_plaque_PLAQUE)
+    VALUES (83);
+
+    -- Insérer un nouveau groupe avec 150 slots
+    INSERT INTO GROUPE (nb_slots_groupe, code_barre_plaque_PLAQUE, id_exp_EXPERIENCE)
+    VALUES (150, 83, 83);
+
+    -- Récupérer le nombre de slots du groupe
+    SELECT nb_slots_groupe INTO v_nb_slots
+    FROM GROUPE WHERE ROWNUM = 1 ORDER BY id_groupe_GROUPE DESC;
+
+    -- Récupérer le type de plaque de l'expérience associée au groupe
+    SELECT type_plaque_LOT INTO v_type_plaque
+    FROM LOT
+    WHERE code_barre_lot_LOT = (
+        SELECT code_barre_lot_LOT
+        FROM PLAQUE
+        WHERE code_barre_plaque_PLAQUE = 83 -- Remplacer par le code-barres spécifié, ici 83
+    );
+
+    -- Récupérer le nombre de plaques du groupe
+    SELECT nb_plaques_GROUPE INTO v_nb_plaques
+    FROM GROUPE WHERE ROWNUM = 1 ORDER BY id_groupe_GROUPE DESC;
+
+    -- Vérifier si le nombre de plaques a été correctement calculé
+    IF v_nb_plaques = CEIL(v_nb_slots / v_type_plaque) THEN
+        INSERT INTO TraceTest VALUES ('TestTriggerCalculNbPlaques', 'ok');
+    ELSE
+        RAISE_APPLICATION_ERROR(-20005, 'Le calcul du nombre de plaques est incorrect');
+    END IF;
+
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('TestTriggerCalculNbPlaques', 'faux');
+END;
+/
+
+ call TestTriggerCalculNbPlaques ();
+
+
 BEGIN
     TestEtatPhotometreNegatif;
     TestEtatPhotometrePositif;
