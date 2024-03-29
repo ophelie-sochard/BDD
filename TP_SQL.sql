@@ -627,20 +627,71 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE TRIGGER TRG_MajFileAttente
+BEFORE INSERT ON ATTENTE
+FOR EACH ROW
+DECLARE
+    v_photometre_id INT;
+    v_max_position INT;
+BEGIN
+    -- Récupérer l'ID du photomètre associé à la nouvelle expérience
+    v_photometre_id := :NEW.id_photometre_PHOTOMETRE;
 
--- Insertion d'un nouveau lot avec les détails spécifiés
-INSERT INTO LOT ( type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock)
-VALUES (96, TO_DATE('2024-03-27', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0, 80);
+    -- Récupérer la position maximale actuelle dans la file d'attente du photomètre
+    SELECT MAX(position_ATTENTE) INTO v_max_position
+    FROM ATTENTE
+    WHERE id_photometre_PHOTOMETRE = v_photometre_id;
 
--- Insertion d'une nouvelle plaque avec un code-barres spécifié
-INSERT INTO PLAQUE ( code_barre_lot_LOT)
-VALUES (83);
+    -- Mettre à jour la position dans la file d'attente de la nouvelle expérience
+    :NEW.position_ATTENTE := COALESCE(v_max_position, 0) + 1;
+END;
+/
 
--- Insertion d'un nouveau groupe avec un nombre de slots spécifié
-INSERT INTO GROUPE ( nb_slots_groupe, code_barre_plaque_PLAQUE, id_exp_EXPERIENCE)
-VALUES (150, 81, 81);
+CREATE OR REPLACE TRIGGER trg_calcul_cout_facture
+BEFORE INSERT ON FACTURE
+FOR EACH ROW
+DECLARE
+    v_cout_total FLOAT;
+BEGIN
+    -- Calculer le coût total des expériences réalisées par le même chercheur
+    SELECT SUM(exp.cout_exp_EXPERIENCE)
+    INTO v_cout_total
+    FROM EXPERIENCE exp
+    JOIN CHERCHEUR cher ON exp.id_chercheur_CHERCHEUR = cher.id_chercheur_CHERCHEUR
+    WHERE cher.id_equipe_EQUIPE = :NEW.id_equipe_EQUIPE
+    AND EXTRACT(MONTH FROM date_fin_EXPERIENCE) = EXTRACT(MONTH FROM :NEW.date_facture_FACTURE);
+
+    -- Affecter le coût total calculé à la facture
+    :NEW.cout_facture_FACTURE := v_cout_total;
+END;
+/
 
 
-INSERT INTO GROUPE ( nb_slots_groupe, code_barre_plaque_PLAQUE, id_exp_EXPERIENCE)
-VALUES (150, 81, 81);
+INSERT INTO EQUIPE (ADRESSE)
+VALUES ('eueueue');
+
+
+INSERT INTO CHERCHEUR (ID_EQUIPE_EQUIPE)
+VALUES (61);
+
+INSERT INTO EXPERIENCE (COUT_EXP_EXPERIENCE, date_fin_EXPERIENCE,ID_CHERCHEUR_CHERCHEUR)
+VALUES (1000.00, TO_DATE('2024-03-31', 'YYYY-MM-DD'),41);
+
+INSERT INTO EXPERIENCE (COUT_EXP_EXPERIENCE, date_fin_EXPERIENCE, ID_CHERCHEUR_CHERCHEUR)
+VALUES (1000.00, TO_DATE('2024-03-31', 'YYYY-MM-DD'),41);
+
+INSERT INTO EXPERIENCE (COUT_EXP_EXPERIENCE, date_fin_EXPERIENCE, ID_CHERCHEUR_CHERCHEUR)
+VALUES (1000.00, TO_DATE('2024-02-28', 'YYYY-MM-DD'),41);
+
+INSERT INTO FACTURE (DATE_FACTURE_FACTURE, ID_EQUIPE_EQUIPE)
+VALUES ( TO_DATE('2024-02-28', 'YYYY-MM-DD'), 61);
+
+
+
+
+
+
+
+
+
 
