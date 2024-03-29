@@ -576,6 +576,22 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE TRIGGER TRG_changement_technicien
+BEFORE UPDATE ON EXPERIENCE
+FOR EACH ROW
+DECLARE
+    l_statut_old VARCHAR2(250);
+BEGIN
+    -- Vérifier si le statut de l'expérience est à "renouveler" et le nouveau technicien est différent de l'ancien
+    IF :OLD.statut_exp_EXPERIENCE = 'renouveler' AND :NEW.id_technicien_TECHNICIEN <> :OLD.id_technicien_TECHNICIEN THEN
+        -- Si la condition est vraie, autoriser la mise à jour
+        NULL;
+    ELSE
+        -- Sinon, annuler la mise à jour en levant une exception
+        RAISE_APPLICATION_ERROR(-20001, 'Impossible de changer le technicien sauf si le statut de l''expérience est "à renouveler"');
+    END IF;
+END;
+/
 
 CREATE OR REPLACE TRIGGER TRG_CalculNbPlaques
 BEFORE INSERT OR UPDATE ON GROUPE

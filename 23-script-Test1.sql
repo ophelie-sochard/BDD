@@ -337,9 +337,66 @@ EXCEPTION
         ROLLBACK;
         INSERT INTO TraceTest VALUES ('TestTriggerLotRachat', 'faux');
         RAISE_APPLICATION_ERROR(-20001, 'Le test a échoué : Aucun lot n''a été racheté');
-        ROLLBACK;
+        COMMIT;
 END;
 /
+
+-- photomètre, attente, technicien, equipe, chercheur, facture
+CREATE OR REPLACE PROCEDURE test_changement_technicien DETERMINISTIC AS
+    l_id_photometre INT;
+    l_id_equipe INT;
+    l_id_technicien INT;
+    l_id_technicien_2 INT;
+    l_id_facture INT;
+    l_id_chercheur INT;
+    l_id_attente INT;
+    l_id_experience INT;
+BEGIN
+    INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('vide');
+    SELECT id_photometre_PHOTOMETRE INTO l_id_photometre FROM PHOTOMETRE WHERE ROWNUM = 1 ORDER BY id_photometre_PHOTOMETRE DESC;
+    
+    INSERT INTO ATTENTE (position_ATTENTE, id_photometre_PHOTOMETRE) VALUES (1, l_id_photometre);
+    SELECT id_position_ATTENTE INTO l_id_attente FROM ATTENTE WHERE ROWNUM = 1 ORDER BY id_position_ATTENTE DESC;
+    
+    INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('libre');
+    SELECT id_technicien_TECHNICIEN INTO l_id_technicien FROM TECHNICIEN WHERE ROWNUM = 1 ORDER BY id_technicien_TECHNICIEN DESC;
+    
+    INSERT INTO EQUIPE (adresse) VALUES ('Université de Poitiers');
+    SELECT id_equipe_EQUIPE INTO l_id_equipe FROM EQUIPE WHERE ROWNUM = 1 ORDER BY id_equipe_EQUIPE DESC;
+    
+    INSERT INTO CHERCHEUR (id_equipe_EQUIPE) VALUES (l_id_equipe);
+    SELECT id_chercheur_CHERCHEUR INTO l_id_chercheur FROM CHERCHEUR WHERE ROWNUM = 1 ORDER BY id_chercheur_CHERCHEUR DESC;
+    
+    INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, l_id_equipe);
+    SELECT id_facture_FACTURE INTO l_id_facture FROM FACTURE WHERE ROWNUM = 1 ORDER BY id_facture_FACTURE DESC;
+    
+    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE, nb_prog_EXPERIENCE, date_debut_EXPERIENCE, date_fin_EXPERIENCE, date_transmission_resultats_EXPERIENCE, cout_exp_EXPERIENCE, type_exp_EXPERIENCE, moyenne_globale_EXPERIENCE, ecart_type_global_EXPERIENCE, a1_EXPERIENCE, a2_EXPERIENCE, a3_EXPERIENCE, coef_surcout_EXPERIENCE, frequence_obs_EXPERIENCE, date_commande_COMMANDE, ordre_priorite_COMMANDE, id_technicien_TECHNICIEN, facture_id_facture_facture, id_chercheur_CHERCHEUR, id_position_ATTENTE) 
+    VALUES ('en cours', 2, TO_DATE('2024-01-01', 'YYYY-MM-DD'), TO_DATE('2024-05-0', 'YYYY-MM-DD'), TO_DATE('2024-05-22', 'YYYY-MM-DD'), 300.00, 'colorimétrique', 150.0, 25.0, 1, 2, 3, 2, 10, TO_DATE('2024-03-20', 'YYYY-MM-DD'), 1, l_id_technicien, l_id_facture, l_id_chercheur, l_id_attente);
+    SELECT id_exp_EXPERIENCE INTO l_id_experience FROM EXPERIENCE WHERE ROWNUM = 1 ORDER BY id_exp_EXPERIENCE DESC;
+    
+    INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('libre');
+    SELECT id_technicien_TECHNICIEN INTO l_id_technicien_2 FROM TECHNICIEN WHERE ROWNUM = 1 ORDER BY id_technicien_TECHNICIEN DESC;
+    
+    -- Mettre à jour le statut de l'expérience
+    UPDATE EXPERIENCE
+    SET statut_exp_EXPERIENCE = 'ratée',
+        id_technicien_TECHNICIEN = l_id_technicien_2
+    WHERE id_exp_EXPERIENCE = l_id_experience;
+    
+    ROLLBACK;
+    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    INSERT INTO TraceTest VALUES ('Test_changement_technicien ', 'ok');
+    COMMIT;
+EXCEPTION
+    WHEN OTHERS THEN
+        ROLLBACK;
+        INSERT INTO TraceTest VALUES ('Test_changement_technicien', 'faux');
+        COMMIT;
+END;
+/
+
+
+call test_changement_technicien();
 
 BEGIN
     TestEtatPhotometreNegatif;
