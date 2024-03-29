@@ -597,15 +597,33 @@ BEGIN
     -- Calculer le nombre de plaques nécessaires en fonction du type de plaque
     IF v_type_plaque = 96 THEN
         v_nb_plaques := CEIL(v_nb_slots / 96.0);
-    ELSIF v_type_plaque = 384 THEN
-        v_nb_plaques := CEIL(v_nb_slots / 384.0);
     ELSE
-        -- Si le type de plaque n'est ni 96 ni 384, lever une erreur
-        RAISE_APPLICATION_ERROR(-20001, 'Type de plaque invalide. Seuls les types de plaque 96 et 384 sont pris en charge.');
+        v_nb_plaques := CEIL(v_nb_slots / 384.0);
     END IF;
 
     -- Mettre à jour le nombre de plaques dans le groupe
     :NEW.nb_plaques_GROUPE := v_nb_plaques;
+END;
+/
+
+
+CREATE OR REPLACE TRIGGER TRG_MemeNombreSlots
+BEFORE INSERT OR UPDATE ON GROUPE
+FOR EACH ROW
+DECLARE
+    v_nb_slots_exp INT;
+BEGIN
+    -- Récupérer le nombre de slots de l'expérience associée au groupe
+    SELECT nb_slots_groupe INTO v_nb_slots_exp
+    FROM GROUPE
+    WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
+    AND ROWNUM = 1; -- Assurez-vous de sélectionner uniquement un enregistrement
+
+    -- Vérifier si le nombre de slots du nouveau groupe est différent du nombre de slots de l'expérience
+    IF :NEW.nb_slots_groupe != v_nb_slots_exp THEN
+        -- Lever une erreur indiquant que tous les groupes d'une même expérience doivent avoir le même nombre de slots
+        RAISE_APPLICATION_ERROR(-20001, 'Tous les groupes d''une même expérience doivent comporter un même nombre de slots.');
+    END IF;
 END;
 /
 
@@ -623,4 +641,6 @@ INSERT INTO GROUPE ( nb_slots_groupe, code_barre_plaque_PLAQUE, id_exp_EXPERIENC
 VALUES (150, 81, 81);
 
 
+INSERT INTO GROUPE ( nb_slots_groupe, code_barre_plaque_PLAQUE, id_exp_EXPERIENCE)
+VALUES (150, 81, 81);
 
