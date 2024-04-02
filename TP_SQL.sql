@@ -594,33 +594,25 @@ END;
 /
 
 CREATE OR REPLACE TRIGGER TRG_CalculNbPlaques
-BEFORE INSERT OR UPDATE ON GROUPE
+BEFORE INSERT OR UPDATE ON Experience
 FOR EACH ROW
 DECLARE
     v_nb_plaques INT;
     v_nb_slots INT := :NEW.nb_slots_groupe;
+    v_nb_groupe int := :NEW.nb_groupe;
     v_type_plaque INT;
 BEGIN
-    -- Récupérer le type de plaque de l'expérience associée au groupe
-    SELECT type_plaque_LOT INTO v_type_plaque
-    FROM LOT
-    WHERE code_barre_lot_LOT = (
-        SELECT code_barre_lot_LOT
-        FROM PLAQUE
-        WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE
-    );
-
-    -- Calculer le nombre de plaques nécessaires en fonction du type de plaque
-    IF v_type_plaque = 96 THEN
+    IF CEIL(v_nb_slots*v_nb_groupe) < 96.0 THEN
         v_nb_plaques := CEIL(v_nb_slots / 96.0);
     ELSE
         v_nb_plaques := CEIL(v_nb_slots / 384.0);
     END IF;
 
     -- Mettre à jour le nombre de plaques dans le groupe
-    :NEW.nb_plaques_GROUPE := v_nb_plaques;
+   -- :NEW.nb_plaques_groupe := v_nb_plaques;
 END;
 /
+
 
 
 CREATE OR REPLACE TRIGGER TRG_MemeNombreSlots
