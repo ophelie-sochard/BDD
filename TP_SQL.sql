@@ -702,12 +702,37 @@ VALUES (1000.00, TO_DATE('2024-02-28', 'YYYY-MM-DD'),41);
 INSERT INTO FACTURE (DATE_FACTURE_FACTURE, ID_EQUIPE_EQUIPE)
 VALUES ( TO_DATE('2024-02-28', 'YYYY-MM-DD'), 61);
 
+CREATE OR REPLACE TRIGGER trg_peuplement_groupe
+BEFORE INSERT ON EXPERIENCE
+FOR EACH ROW
+DECLARE
+    l_nb_groupes INT := :NEW.nb_groupe;
+BEGIN
+    FOR i IN 1..l_nb_groupes LOOP
+        INSERT INTO GROUPE (id_exp_EXPERIENCE) VALUES (:NEW.id_exp_EXPERIENCE);
+    END LOOP;
+END;
+/
 
-
-
-
-
-
-
-
-
+CREATE OR REPLACE TRIGGER trg_peuplement_puits
+BEFORE INSERT ON GROUPE
+FOR EACH ROW
+DECLARE
+    l_nb_groupe INT;
+    l_nb_puits_par_groupe INT;
+    l_nb_puits INT;
+BEGIN
+    -- Récupérer le nombre de puits à insérer en fonction des variables dans EXPERIENCE
+    SELECT nb_groupe, nb_slots_groupe INTO l_nb_groupe, l_nb_puits_par_groupe
+    FROM EXPERIENCE
+    WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE;
+    
+    -- Calculer le nombre total de puits à insérer
+    l_nb_puits := l_nb_groupe * l_nb_puits_par_groupe;
+    
+    -- Insérer les puits correspondants
+    FOR i IN 1..l_nb_puits LOOP
+        INSERT INTO PUITS (id_groupe_GROUPE) VALUES (:NEW.id_groupe_GROUPE);
+    END LOOP;
+END;
+/
