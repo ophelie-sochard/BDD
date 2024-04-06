@@ -446,19 +446,90 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE TRIGGER trg_plaque_stock_init
+Before INSERT ON LOT
+FOR EACH ROW
+BEGIN
+    -- Mettre à jour le stock actuel du lot à 80 avant l'insertion du lot
+    :new.stock_actuel_stock := 80;
+END;
+/
+
 CREATE OR REPLACE TRIGGER trg_plaque_insert
-AFTER INSERT ON LOT
+After INSERT ON LOT
 FOR EACH ROW
 DECLARE
     l_lot_id NUMBER;
+    l_nb_slots NUMBER;
 BEGIN
-  l_lot_id := :new.code_barre_lot_LOT;
-  FOR i IN 1..80 LOOP
-    INSERT INTO PLAQUE (code_barre_plaque_PLAQUE, code_barre_lot_LOT)
-    VALUES (SEQ_PLAQUE.NEXTVAL, l_lot_id);
-  END LOOP;
+   
+    l_lot_id := :new.code_barre_lot_LOT;
+    l_nb_slots := :new.type_plaque_lot;
+      
+    FOR i IN 1..80 LOOP
+        INSERT INTO PLAQUE (code_barre_plaque_PLAQUE, code_barre_lot_LOT, nb_slots_libre)
+        VALUES (SEQ_PLAQUE.NEXTVAL, l_lot_id, l_nb_slots);
+    END LOOP;
 END;
 /
+
+CREATE OR REPLACE TRIGGER trg_update_slots
+BEFORE INSERT ON GROUPE
+FOR EACH ROW
+DECLARE
+    l_nb_slots_libre PLAQUE.nb_slots_libre%TYPE;
+BEGIN
+    -- Récupérer le nombre de slots libres pour la plaque associée au nouveau groupe
+    SELECT nb_slots_libre INTO l_nb_slots_libre
+    FROM PLAQUE
+    WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
+
+    -- Vérifier si le nombre de slots libres est supérieur à zéro
+    IF l_nb_slots_libre > 0 THEN
+        -- Décrémenter le nombre de slots libres de trois
+        UPDATE PLAQUE
+        SET nb_slots_libre = nb_slots_libre - 3
+        WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
+    ELSE
+        -- Générer une erreur et annuler l'insertion si le nombre de slots libres est égal à zéro
+        RAISE_APPLICATION_ERROR(-20001, 'Impossible d insérer un groupe car le nombre de slots libres est égal à zéro.');
+    END IF;
+END;
+/
+
+
+
+
+CREATE OR REPLACE TRIGGER trg_update_stock_lot
+AFTER INSERT ON GROUPE
+FOR EACH ROW
+DECLARE
+    l_stock_actuel NUMBER;
+    l_nb_slots_libre NUMBER;
+    l_code_barre_lot_plaque PLAQUE.code_barre_lot_lot%TYPE;
+BEGIN
+    -- Récupérer le nombre de slots libres pour la nouvelle plaque insérée
+    SELECT nb_slots_libre
+    INTO l_nb_slots_libre
+    FROM PLAQUE
+    WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
+
+    -- Vérifier si le nombre de slots libres est inférieur à trois
+    IF l_nb_slots_libre < 3 THEN
+        -- Récupérer le code-barres du lot correspondant à la plaque insérée
+        SELECT code_barre_lot_LOT
+        INTO l_code_barre_lot_plaque
+        FROM PLAQUE
+        WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
+
+        -- Mettre à jour le stock actuel du lot correspondant
+        UPDATE LOT
+        SET stock_actuel_stock = stock_actuel_stock - 1
+        WHERE code_barre_lot_LOT = l_code_barre_lot_plaque;
+    END IF;
+END;
+/
+
 
 CREATE OR REPLACE TRIGGER TRG_puits_colorimetrie
 AFTER INSERT OR UPDATE ON EXPERIENCE
@@ -615,25 +686,6 @@ END;
 
 
 
-CREATE OR REPLACE TRIGGER TRG_MemeNombreSlots
-BEFORE INSERT OR UPDATE ON GROUPE
-FOR EACH ROW
-DECLARE
-    v_nb_slots_exp INT;
-BEGIN
-    -- Récupérer le nombre de slots de l'expérience associée au groupe
-    SELECT nb_slots_groupe INTO v_nb_slots_exp
-    FROM GROUPE
-    WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
-    AND ROWNUM = 1; -- Assurez-vous de sélectionner uniquement un enregistrement
-
-    -- Vérifier si le nombre de slots du nouveau groupe est différent du nombre de slots de l'expérience
-    IF :NEW.nb_slots_groupe != v_nb_slots_exp THEN
-        -- Lever une erreur indiquant que tous les groupes d'une même expérience doivent avoir le même nombre de slots
-        RAISE_APPLICATION_ERROR(-20001, 'Tous les groupes d''une même expérience doivent comporter un même nombre de slots.');
-    END IF;
-END;
-/
 
 CREATE OR REPLACE TRIGGER TRG_MajFileAttente
 BEFORE INSERT ON ATTENTE
@@ -674,92 +726,59 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE TRIGGER calculer_moyennes_groupe
-AFTER INSERT OR UPDATE ON groupe
+--CREATE OR REPLACE TRIGGER calculer_moyennes_groupe
+--AFTER INSERT OR UPDATE ON groupe
+--FOR EACH ROW
+--DECLARE
+--    statut_experience experience.statut_exp_experience%TYPE; -- Déclaration de la variable statut_experience
+--BEGIN
+--    SELECT STATUT_EXP_EXPERIENCE INTO statut_experience FROM experience WHERE ID_EXP_EXPERIENCE = :NEW.ID_EXP_EXPERIENCE;
+--
+--    -- Si le statut de l'expérience est 'colorimétrique', calcule les moyennes R, B et V
+--    IF statut_experience = 'colorimétrique' THEN
+--        UPDATE groupe
+--        SET MOYENNE_GRP_R = (SELECT AVG(RM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
+--            MOYENNE_GRP_B = (SELECT AVG(BM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
+--            MOYENNE_GRP_V = (SELECT AVG(VM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
+--            MOYENNE_GRP_T = NULL
+--        WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE;
+--
+--    -- Si le statut de l'expérience est 'opacimétrique', calcule la moyenne T
+--    ELSIF statut_experience = 'opacimétrique' THEN
+--        UPDATE groupe
+--        SET MOYENNE_GRP_T = (SELECT AVG(TM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
+--            MOYENNE_GRP_R = NULL,
+--            MOYENNE_GRP_B = NULL,
+--            MOYENNE_GRP_V = NULL
+--        WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE;
+--    END IF;
+--END;
+--/
+
+CREATE OR REPLACE TRIGGER trg_auto_insert_groupe
+AFTER INSERT ON experience
 FOR EACH ROW
 DECLARE
-    statut_experience experience.statut_exp_experience%TYPE; -- Déclaration de la variable statut_experience
+    l_id_technicien NUMBER;
+    l_code_barre_plaque_plaque PLAQUE.CODE_BARRE_PLAQUE_PLAQUE%TYPE;
 BEGIN
-    SELECT STATUT_EXP_EXPERIENCE INTO statut_experience FROM experience WHERE ID_EXP_EXPERIENCE = :NEW.ID_EXP_EXPERIENCE;
+    -- Récupérer l'ID_TECHNICIEN_TECHNICIEN inséré dans la nouvelle ligne de la table "experience"
+    l_id_technicien := :NEW.ID_TECHNICIEN_TECHNICIEN;
 
-    -- Si le statut de l'expérience est 'colorimétrique', calcule les moyennes R, B et V
-    IF statut_experience = 'colorimétrique' THEN
-        UPDATE groupe
-        SET MOYENNE_GRP_R = (SELECT AVG(RM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
-            MOYENNE_GRP_B = (SELECT AVG(BM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
-            MOYENNE_GRP_V = (SELECT AVG(VM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
-            MOYENNE_GRP_T = NULL
-        WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE;
+    -- Vérifier si l'ID_TECHNICIEN_TECHNICIEN est non nul
+    IF l_id_technicien IS NOT NULL THEN
+        -- Sélectionner un code de plaque avec des slots libres disponibles
+        SELECT code_barre_plaque_PLAQUE INTO l_code_barre_plaque_plaque
+        FROM PLAQUE
+        WHERE nb_slots_libre > 0
+        AND ROWNUM = 1; -- Pour sélectionner uniquement la première plaque disponible
 
-    -- Si le statut de l'expérience est 'opacimétrique', calcule la moyenne T
-    ELSIF statut_experience = 'opacimétrique' THEN
-        UPDATE groupe
-        SET MOYENNE_GRP_T = (SELECT AVG(TM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
-            MOYENNE_GRP_R = NULL,
-            MOYENNE_GRP_B = NULL,
-            MOYENNE_GRP_V = NULL
-        WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE;
+        -- Boucle pour insérer dans la table "groupe" selon la valeur de nb_groupe
+        FOR i IN 1..:NEW.NB_GROUPE LOOP
+            -- Insérer automatiquement dans la table "groupe"
+            INSERT INTO groupe (ID_EXP_EXPERIENCE, CODE_BARRE_PLAQUE_PLAQUE)
+            VALUES (:NEW.ID_EXP_EXPERIENCE, l_code_barre_plaque_plaque);
+        END LOOP;
     END IF;
-END;
-/
-
--- Exemple 1
-INSERT INTO PUITS (X_PUITS_PUITS, Y_PUITS_PUITS, RM_PIXEL, RD_PIXEL, VM_PIXEL, VD_PIXEL, BM_PIXEL, BD_PIXEL, ID_GROUPE_GROUPE)
-VALUES (10, 20, 50, 150, 20, 130, 25, 120, 22, 22);
-
--- Exemple 2
-INSERT INTO PUITS (X_PUITS_PUITS, Y_PUITS_PUITS, RM_PIXEL, RD_PIXEL, VM_PIXEL, VD_PIXEL, BM_PIXEL, BD_PIXEL, ID_GROUPE_GROUPE)
-VALUES (15, 25, 55, 155, 18, 133, 23, 122, 20, 22);
-
--- Insérer un groupe associé à l'expérience précédente avec des valeurs de pixels
-INSERT INTO GROUPE (ID_GROUPE_GROUPE, ID_EXP_EXPERIENCE) VALUES (22, 105);
-
-INSERT INTO CHERCHEUR (ID_EQUIPE_EQUIPE)
-VALUES (61);
-
-INSERT INTO EXPERIENCE (COUT_EXP_EXPERIENCE, date_fin_EXPERIENCE,ID_CHERCHEUR_CHERCHEUR)
-VALUES (1000.00, TO_DATE('2024-03-31', 'YYYY-MM-DD'),41);
-
-INSERT INTO EXPERIENCE (COUT_EXP_EXPERIENCE, date_fin_EXPERIENCE, ID_CHERCHEUR_CHERCHEUR)
-VALUES (1000.00, TO_DATE('2024-03-31', 'YYYY-MM-DD'),41);
-
-INSERT INTO EXPERIENCE (COUT_EXP_EXPERIENCE, date_fin_EXPERIENCE, ID_CHERCHEUR_CHERCHEUR)
-VALUES (1000.00, TO_DATE('2024-02-28', 'YYYY-MM-DD'),41);
-
-INSERT INTO FACTURE (DATE_FACTURE_FACTURE, ID_EQUIPE_EQUIPE)
-VALUES ( TO_DATE('2024-02-28', 'YYYY-MM-DD'), 61);
-
-CREATE OR REPLACE TRIGGER trg_peuplement_groupe
-BEFORE INSERT ON EXPERIENCE
-FOR EACH ROW
-DECLARE
-    l_nb_groupes INT := :NEW.nb_groupe;
-BEGIN
-    FOR i IN 1..l_nb_groupes LOOP
-        INSERT INTO GROUPE (id_exp_EXPERIENCE) VALUES (:NEW.id_exp_EXPERIENCE);
-    END LOOP;
-END;
-/
-
-CREATE OR REPLACE TRIGGER trg_peuplement_puits
-BEFORE INSERT ON GROUPE
-FOR EACH ROW
-DECLARE
-    l_nb_groupe INT;
-    l_nb_puits_par_groupe INT;
-    l_nb_puits INT;
-BEGIN
-    -- Récupérer le nombre de puits à insérer en fonction des variables dans EXPERIENCE
-    SELECT nb_groupe, nb_slots_groupe INTO l_nb_groupe, l_nb_puits_par_groupe
-    FROM EXPERIENCE
-    WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE;
-    
-    -- Calculer le nombre total de puits à insérer
-    l_nb_puits := l_nb_groupe * l_nb_puits_par_groupe;
-    
-    -- Insérer les puits correspondants
-    FOR i IN 1..l_nb_puits LOOP
-        INSERT INTO PUITS (id_groupe_GROUPE) VALUES (:NEW.id_groupe_GROUPE);
-    END LOOP;
 END;
 /
