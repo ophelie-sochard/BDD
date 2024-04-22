@@ -152,8 +152,45 @@ INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT
 VALUES 
 (96, TO_DATE('2024-04-05', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0);
 
-INSERT INTO GROUPE (code_barre_plaque_PLAQUE) VALUES ('1234');
-
 INSERT INTO EXPERIENCE (id_technicien_TECHNICIEN, id_chercheur_CHERCHEUR, NB_GROUPE) 
-VALUES ((SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE id_technicien_TECHNICIEN = 61), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE id_chercheur_CHERCHEUR = 61),1);
+VALUES ((SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE id_technicien_TECHNICIEN = 61), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE id_chercheur_CHERCHEUR = 61),32);
 
+delete from  plaque;
+delete from lot; 
+UPDATE puits
+SET 
+    X_PUITS_PUITS = 10,
+    Y_PUITS_PUITS = 10,
+    RM_PIXEL = 10,
+    RD_PIXEL = 10,
+    VM_PIXEL = 10,
+    VD_PIXEL = 10,
+    BM_PIXEL = 10,
+    BD_PIXEL = 10,
+    TM_PIXEL = null,
+    TD_PIXEL = null
+WHERE ID_PUITS_PUITS = 61;
+UPDATE puits
+SET 
+    X_PUITS_PUITS = 20,
+    Y_PUITS_PUITS = 20,
+    RM_PIXEL = 10,
+    RD_PIXEL = 10,
+    VM_PIXEL = 10,
+    VD_PIXEL = 10,
+    BM_PIXEL = 10,
+    BD_PIXEL = 10
+WHERE ID_PUITS_PUITS = 62;
+UPDATE puits
+SET 
+    X_PUITS_PUITS = 20,
+    Y_PUITS_PUITS = 20,
+    RM_PIXEL = null,
+    RD_PIXEL = null,
+    VM_PIXEL = null,
+    VD_PIXEL = null,
+    BM_PIXEL = null,
+    BD_PIXEL = null,
+    TM_PIXEL = 10,
+    TD_PIXEL = 10
+WHERE ID_PUITS_PUITS = 157;

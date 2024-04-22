@@ -496,17 +496,17 @@ BEGIN
     END IF;
 END;
 /
-
-
-
-
+-- mise a jour du stock
 CREATE OR REPLACE TRIGGER trg_update_stock_lot
 AFTER INSERT ON GROUPE
 FOR EACH ROW
 DECLARE
     l_stock_actuel NUMBER;
     l_nb_slots_libre NUMBER;
+    l_type_plaque_lot LOT.type_plaque_lot%TYPE;
     l_code_barre_lot_plaque PLAQUE.code_barre_lot_lot%TYPE;
+    l_fabricant_lot VARCHAR2(250 BYTE); -- Changer la taille en fonction de votre modèle de données
+    l_vendeur_lot VARCHAR2(250 BYTE);
 BEGIN
     -- Récupérer le nombre de slots libres pour la nouvelle plaque insérée
     SELECT nb_slots_libre
@@ -521,15 +521,40 @@ BEGIN
         INTO l_code_barre_lot_plaque
         FROM PLAQUE
         WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
-
-        -- Mettre à jour le stock actuel du lot correspondant
-        UPDATE LOT
-        SET stock_actuel_stock = stock_actuel_stock - 1
+        -- Vérifier si le stock actuel est supérieur à zéro avant de décrémenter
+        SELECT stock_actuel_stock
+        INTO l_stock_actuel
+        FROM LOT
         WHERE code_barre_lot_LOT = l_code_barre_lot_plaque;
+        -- Récupérer le type de plaque du lot correspondant
+        SELECT type_plaque_lot
+        INTO l_type_plaque_lot
+        FROM LOT
+        WHERE code_barre_lot_LOT = l_code_barre_lot_plaque;
+        
+        SELECT vendeur_lot
+        INTO l_vendeur_lot
+        FROM LOT
+        WHERE code_barre_lot_LOT = l_code_barre_lot_plaque;
+        
+        SELECT fabricant_lot
+        INTO l_fabricant_lot
+        FROM LOT
+        WHERE code_barre_lot_LOT = l_code_barre_lot_plaque;
+        
+        IF l_stock_actuel > 1 THEN
+            -- Mettre à jour le stock actuel du lot correspondant
+            UPDATE LOT
+            SET stock_actuel_stock = stock_actuel_stock - 1
+            WHERE code_barre_lot_LOT = l_code_barre_lot_plaque;
+        ELSE
+        -- Insérer un nouveau lot si le stock est inférieur à zéro
+        INSERT INTO LOT (stock_precedent_stock,stock_actuel_stock,type_plaque_lot, fabricant_lot, vendeur_lot,date_livraison_lot)
+        VALUES (0,80,l_type_plaque_lot,l_fabricant_lot,l_vendeur_lot, sysdate); -- Exemple de valeurs à insérer
+        END IF;
     END IF;
 END;
 /
-
 
 CREATE OR REPLACE TRIGGER TRG_puits_colorimetrie
 AFTER INSERT OR UPDATE ON EXPERIENCE
@@ -685,8 +710,6 @@ END;
 /
 
 
-
-
 CREATE OR REPLACE TRIGGER TRG_MajFileAttente
 BEFORE INSERT ON ATTENTE
 FOR EACH ROW
@@ -726,35 +749,8 @@ BEGIN
 END;
 /
 
---CREATE OR REPLACE TRIGGER calculer_moyennes_groupe
---AFTER INSERT OR UPDATE ON groupe
---FOR EACH ROW
---DECLARE
---    statut_experience experience.statut_exp_experience%TYPE; -- Déclaration de la variable statut_experience
---BEGIN
---    SELECT STATUT_EXP_EXPERIENCE INTO statut_experience FROM experience WHERE ID_EXP_EXPERIENCE = :NEW.ID_EXP_EXPERIENCE;
---
---    -- Si le statut de l'expérience est 'colorimétrique', calcule les moyennes R, B et V
---    IF statut_experience = 'colorimétrique' THEN
---        UPDATE groupe
---        SET MOYENNE_GRP_R = (SELECT AVG(RM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
---            MOYENNE_GRP_B = (SELECT AVG(BM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
---            MOYENNE_GRP_V = (SELECT AVG(VM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
---            MOYENNE_GRP_T = NULL
---        WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE;
---
---    -- Si le statut de l'expérience est 'opacimétrique', calcule la moyenne T
---    ELSIF statut_experience = 'opacimétrique' THEN
---        UPDATE groupe
---        SET MOYENNE_GRP_T = (SELECT AVG(TM_PIXEL) FROM PUITS WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE),
---            MOYENNE_GRP_R = NULL,
---            MOYENNE_GRP_B = NULL,
---            MOYENNE_GRP_V = NULL
---        WHERE ID_GROUPE_GROUPE = :NEW.ID_GROUPE_GROUPE;
---    END IF;
---END;
---/
 
+--insertion dans la la table groupe apres la création d'une experience et que celle ci est ratacher a un technicien
 CREATE OR REPLACE TRIGGER trg_auto_insert_groupe
 AFTER INSERT ON experience
 FOR EACH ROW
@@ -780,5 +776,106 @@ BEGIN
             VALUES (:NEW.ID_EXP_EXPERIENCE, l_code_barre_plaque_plaque);
         END LOOP;
     END IF;
+END;
+/
+
+-- insertion automatique de puits apres la création de groupe 
+CREATE OR REPLACE TRIGGER trg_insert_puit
+AFTER INSERT ON groupe
+FOR EACH ROW
+DECLARE
+    l_id_groupe groupe.ID_GROUPE_Groupe%TYPE;
+BEGIN
+    -- Récupérer l'ID de groupe de la nouvelle ligne insérée dans la table "groupe"
+    l_id_groupe := :NEW.ID_GROUPE_groupe;
+
+    -- Insérer trois enregistrements dans la table "puit" avec l'ID de groupe correspondant
+    FOR i IN 1..3 LOOP
+        INSERT INTO puits (ID_GROUPE_Groupe)
+        VALUES (l_id_groupe);
+    END LOOP;
+END;
+/
+ -- insertion dans la table groupe des valeur des  puits apres update 
+CREATE OR REPLACE TRIGGER trg_update_groupe
+FOR UPDATE ON puits
+COMPOUND TRIGGER
+    -- Déclaration d'une collection pour stocker les ID de groupe modifiés
+    TYPE t_group_ids IS TABLE OF puits.id_groupe_groupe%TYPE;
+    v_group_ids t_group_ids := t_group_ids();
+
+    -- Before Statement Section
+    BEFORE STATEMENT IS
+    BEGIN
+        -- Initialisation de la collection des ID de groupe
+        v_group_ids := t_group_ids();
+    END BEFORE STATEMENT;
+
+    -- Before Each Row Section
+    BEFORE EACH ROW IS
+    BEGIN
+        -- Ajout de l'ID de groupe modifié à la collection
+        IF UPDATING THEN
+            v_group_ids.EXTEND;
+            v_group_ids(v_group_ids.LAST) := :NEW.ID_GROUPE_GROUPE;
+        END IF;
+    END BEFORE EACH ROW;
+
+    -- After Statement Section
+    AFTER STATEMENT IS
+    BEGIN
+        -- Parcours des ID de groupe uniques et mise à jour des colonnes de groupe pour chaque groupe
+        FOR i IN 1..v_group_ids.COUNT LOOP
+            calculer_moyennes(v_group_ids(i));
+        END LOOP;
+    END AFTER STATEMENT;
+END trg_update_groupe;
+/
+
+-- Permet de calculer les moyennes pour apres inserer dans la table groupe
+CREATE OR REPLACE PROCEDURE calculer_moyennes(p_id_groupe IN puits.id_groupe_groupe%TYPE) AS
+    v_moyenne_rm NUMBER;
+    v_moyenne_vm NUMBER;
+    v_moyenne_bm NUMBER;
+    v_moyenne_tm NUMBER;
+    v_ecart_type_rd NUMBER;
+    v_ecart_type_vd NUMBER;
+    v_ecart_type_bd NUMBER;
+    v_ecart_type_td NUMBER;
+    v_x_grp_groupe number;
+    v_y_grp_groupe number;
+    v_acceptation NUMBER;
+BEGIN
+    -- Calcul des moyennes pour chaque colonne
+    SELECT AVG (X_PUITS_PUITS),AVG (Y_PUITS_PUITS),
+            AVG(RM_PIXEL), AVG(VM_PIXEL),
+           AVG(BM_PIXEL), AVG(TM_PIXEL),
+           avg(RD_PIXEL),AVG(VD_PIXEL),
+        AVG(BD_PIXEL), AVG(TD_PIXEL)
+    INTO v_x_grp_groupe, v_y_grp_groupe, 
+        v_moyenne_rm,  v_moyenne_vm, v_moyenne_bm, v_moyenne_tm, 
+        V_ecart_type_rd, v_ecart_type_vd, v_ecart_type_bd,  v_ecart_type_td
+    FROM puits
+    WHERE ID_GROUPE_GROUPE = p_id_groupe;
+    -- Calcul de l'acceptation en fonction de l'écart-type
+    IF (v_ecart_type_rd < 11 AND v_ecart_type_vd < 11 AND v_ecart_type_bd < 11)or (v_ecart_type_td < 11)  THEN
+        v_acceptation := 1; -- Acceptation
+    ELSE
+        v_acceptation := 0; -- Non acceptation
+    END IF;
+    -- Mise à jour des valeurs dans la table groupe
+    UPDATE groupe
+    SET X_GRP_GROUPE= v_x_grp_groupe, 
+        Y_GRP_GROUPE= v_y_grp_groupe, 
+        MOYENNE_GRP_R = v_moyenne_rm, 
+        MOYENNE_GRP_V = v_moyenne_vm, 
+        MOYENNE_GRP_B = v_moyenne_bm, 
+        MOYENNE_GRP_T = v_moyenne_tm,
+        ECART_TYPE_GRP_R = v_ecart_type_rd,
+        ECART_TYPE_GRP_V = v_ecart_type_vd,
+        ECART_TYPE_GRP_B = v_ecart_type_bd,
+        ECART_TYPE_GRP_T = v_ecart_type_td,
+        ACCEPTATION_GROUPE = v_acceptation
+    WHERE ID_GROUPE_GROUPE = p_id_groupe;
 END;
 /
