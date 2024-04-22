@@ -757,17 +757,42 @@ FOR EACH ROW
 DECLARE
     l_id_technicien NUMBER;
     l_code_barre_plaque_plaque PLAQUE.CODE_BARRE_PLAQUE_PLAQUE%TYPE;
+    l_code_barre_lot_lot LOT.CODE_BARRE_LOT_LOT%TYPE;
 BEGIN
     -- Récupérer l'ID_TECHNICIEN_TECHNICIEN inséré dans la nouvelle ligne de la table "experience"
     l_id_technicien := :NEW.ID_TECHNICIEN_TECHNICIEN;
 
     -- Vérifier si l'ID_TECHNICIEN_TECHNICIEN est non nul
     IF l_id_technicien IS NOT NULL THEN
-        -- Sélectionner un code de plaque avec des slots libres disponibles
-        SELECT code_barre_plaque_PLAQUE INTO l_code_barre_plaque_plaque
-        FROM PLAQUE
-        WHERE nb_slots_libre > 0
-        AND ROWNUM = 1; -- Pour sélectionner uniquement la première plaque disponible
+        
+        IF :NEW.NB_GROUPE > 32 THEN
+            SELECT code_barre_lot_LOT INTO l_code_barre_lot_lot
+            FROM LOT
+            WHERE stock_actuel_stock > 0
+            and type_plaque_lot =384
+            AND ROWNUM = 1;
+        Else
+            SELECT code_barre_lot_LOT INTO l_code_barre_lot_lot
+            FROM LOT
+            WHERE stock_actuel_stock > 0
+            and type_plaque_lot =96
+            AND ROWNUM = 1;
+        end if;
+        -- Si le nombre de slots libres est égal à 384, sélectionner la première plaque disponible avec 384 slots libres
+        IF :NEW.NB_GROUPE > 32 THEN
+            SELECT code_barre_plaque_PLAQUE INTO l_code_barre_plaque_plaque
+            FROM PLAQUE
+            WHERE code_barre_lot_lot = l_code_barre_lot_lot
+            AND nb_slots_libre > 96
+            AND ROWNUM = 1;
+        ELSE
+            -- Sinon, sélectionner une plaque avec 96 slots libres
+            SELECT code_barre_plaque_PLAQUE INTO l_code_barre_plaque_plaque
+            FROM PLAQUE
+            WHERE code_barre_lot_lot = l_code_barre_lot_lot
+            AND nb_slots_libre = 96
+            AND ROWNUM = 1;
+        END IF;
 
         -- Boucle pour insérer dans la table "groupe" selon la valeur de nb_groupe
         FOR i IN 1..:NEW.NB_GROUPE LOOP

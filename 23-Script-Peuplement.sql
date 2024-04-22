@@ -153,7 +153,7 @@ VALUES
 (96, TO_DATE('2024-04-05', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0);
 
 INSERT INTO EXPERIENCE (id_technicien_TECHNICIEN, id_chercheur_CHERCHEUR, NB_GROUPE) 
-VALUES ((SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE id_technicien_TECHNICIEN = 61), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE id_chercheur_CHERCHEUR = 61),32);
+VALUES ((SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE id_technicien_TECHNICIEN = 81), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE id_chercheur_CHERCHEUR = 81),1);
 
 delete from  plaque;
 delete from lot; 
