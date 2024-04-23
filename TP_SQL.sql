@@ -857,44 +857,47 @@ COMPOUND TRIGGER
 END trg_update_groupe;
 /
 
--- Permet de calculer les moyennes pour apres inserer dans la table groupe
 CREATE OR REPLACE PROCEDURE calculer_moyennes(p_id_groupe IN puits.id_groupe_groupe%TYPE) AS
     v_moyenne_rm NUMBER;
     v_moyenne_vm NUMBER;
     v_moyenne_bm NUMBER;
     v_moyenne_tm NUMBER;
+    v_moyenne_globale NUMBER;
     v_ecart_type_rd NUMBER;
     v_ecart_type_vd NUMBER;
     v_ecart_type_bd NUMBER;
     v_ecart_type_td NUMBER;
-    v_x_grp_groupe number;
-    v_y_grp_groupe number;
+    v_ecart_type_global NUMBER;
+    v_x_grp_groupe NUMBER;
+    v_y_grp_groupe NUMBER;
     v_acceptation NUMBER;
 BEGIN
     -- Calcul des moyennes pour chaque colonne
-    SELECT AVG (X_PUITS_PUITS),AVG (Y_PUITS_PUITS),
-            AVG(RM_PIXEL), AVG(VM_PIXEL),
+    SELECT AVG(X_PUITS_PUITS), AVG(Y_PUITS_PUITS),
+           AVG(RM_PIXEL), AVG(VM_PIXEL),
            AVG(BM_PIXEL), AVG(TM_PIXEL),
-           avg(RD_PIXEL),AVG(VD_PIXEL),
-        AVG(BD_PIXEL), AVG(TD_PIXEL)
-    INTO v_x_grp_groupe, v_y_grp_groupe, 
-        v_moyenne_rm,  v_moyenne_vm, v_moyenne_bm, v_moyenne_tm, 
-        V_ecart_type_rd, v_ecart_type_vd, v_ecart_type_bd,  v_ecart_type_td
+           AVG(RD_PIXEL), AVG(VD_PIXEL),
+           AVG(BD_PIXEL), AVG(TD_PIXEL)
+    INTO v_x_grp_groupe, v_y_grp_groupe,
+        v_moyenne_rm, v_moyenne_vm, v_moyenne_bm, v_moyenne_tm,
+        v_ecart_type_rd, v_ecart_type_vd, v_ecart_type_bd, v_ecart_type_td
     FROM puits
     WHERE ID_GROUPE_GROUPE = p_id_groupe;
+
     -- Calcul de l'acceptation en fonction de l'écart-type
-    IF (v_ecart_type_rd < 11 AND v_ecart_type_vd < 11 AND v_ecart_type_bd < 11)or (v_ecart_type_td < 11)  THEN
+    IF (v_ecart_type_rd < 11 AND v_ecart_type_vd < 11 AND v_ecart_type_bd < 11) OR (v_ecart_type_td < 11) THEN
         v_acceptation := 1; -- Acceptation
     ELSE
         v_acceptation := 0; -- Non acceptation
     END IF;
+
     -- Mise à jour des valeurs dans la table groupe
     UPDATE groupe
-    SET X_GRP_GROUPE= v_x_grp_groupe, 
-        Y_GRP_GROUPE= v_y_grp_groupe, 
-        MOYENNE_GRP_R = v_moyenne_rm, 
-        MOYENNE_GRP_V = v_moyenne_vm, 
-        MOYENNE_GRP_B = v_moyenne_bm, 
+    SET X_GRP_GROUPE = v_x_grp_groupe,
+        Y_GRP_GROUPE = v_y_grp_groupe,
+        MOYENNE_GRP_R = v_moyenne_rm,
+        MOYENNE_GRP_V = v_moyenne_vm,
+        MOYENNE_GRP_B = v_moyenne_bm,
         MOYENNE_GRP_T = v_moyenne_tm,
         ECART_TYPE_GRP_R = v_ecart_type_rd,
         ECART_TYPE_GRP_V = v_ecart_type_vd,
@@ -902,5 +905,62 @@ BEGIN
         ECART_TYPE_GRP_T = v_ecart_type_td,
         ACCEPTATION_GROUPE = v_acceptation
     WHERE ID_GROUPE_GROUPE = p_id_groupe;
+
+    -- Calcul de la moyenne globale de l'expérience
+    SELECT AVG(MOYENNE_GRP_R + MOYENNE_GRP_V + MOYENNE_GRP_B + MOYENNE_GRP_T)
+    INTO v_moyenne_globale
+    FROM groupe
+    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+
+    -- Mise à jour de la moyenne globale dans la table expérience
+    UPDATE experience
+    SET MOYENNE_GLOBALE_EXPERIENCE = v_moyenne_globale
+    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+
+    -- Calcul de la moyenne globale de l'écart-type de l'expérience
+    SELECT AVG(ECART_TYPE_GRP_R + ECART_TYPE_GRP_V + ECART_TYPE_GRP_B + ECART_TYPE_GRP_T)
+    INTO v_ecart_type_global
+    FROM groupe
+    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+
+    -- Mise à jour de l'écart-type global dans la table expérience
+    UPDATE experience
+    SET ECART_TYPE_GLOBAL_EXPERIENCE = v_ecart_type_global
+    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+END;
+/
+
+CREATE OR REPLACE TRIGGER TRG_CalculCoefSurcout
+BEFORE UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
+FOR EACH ROW
+DECLARE
+    v_coefficient NUMBER;
+    v_total_experiences_attente INT;
+    v_experiences_doublees INT;
+BEGIN
+    -- Vérifier si le statut de l'expérience est 'en attente'
+    IF :NEW.statut_exp_EXPERIENCE = 'en attente' THEN
+        -- Récupérer le nombre total d'expériences en attente de programmation
+        SELECT COUNT(*) INTO v_total_experiences_attente
+        FROM ATTENTE;
+
+        -- Récupérer le nombre d'expériences doublées par l'expérience en cours
+        SELECT COUNT(*) INTO v_experiences_doublees
+        FROM ATTENTE
+        WHERE id_photometre_PHOTOMETRE = :NEW.id_photometre_PHOTOMETRE
+
+        -- Calcul du coefficient
+        IF v_total_experiences_attente = 0 THEN
+            v_coefficient := 1;
+        ELSE
+            v_coefficient := (v_total_experiences_attente + v_experiences_doublees) / v_total_experiences_attente;
+        END IF;
+
+        -- Mettre à jour le coefficient de surcoût dans la table EXPERIENCE
+        :NEW.coef_surcout_experience := v_coefficient;
+
+        -- Mettre à jour le prix total de l'expérience
+        :NEW.cout_EXP_EXPERIENCE := :NEW.cout_EXP_EXPERIENCE * v_coefficient;
+    END IF;
 END;
 /
