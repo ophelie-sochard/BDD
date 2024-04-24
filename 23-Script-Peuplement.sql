@@ -1,8 +1,10 @@
-
 -- Peuplement de la table LOT
 INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock) 
 VALUES 
 (96, TO_DATE('2024-01-01', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0, 80);
+INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock) 
+VALUES 
+(384, TO_DATE('2024-01-01', 'YYYY-MM-DD'), 'Vendeur2', 'Fabricant2', 0, 80);
 
 -- Peuplement de la table EQUIPE
 INSERT INTO EQUIPE (adresse) 
@@ -25,29 +27,6 @@ INSERT INTO EQUIPE (adresse)
 VALUES ('Université de Lille');
 INSERT INTO EQUIPE (adresse) 
 VALUES ('Université de Brest');
-
--- Peuplement de la table FACTURE
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 33));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 34));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 35));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 36));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 37));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 38));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 39));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 40));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 41));
-INSERT INTO FACTURE (date_facture_FACTURE, cout_facture_FACTURE, id_equipe_EQUIPE) 
-VALUES (TO_DATE('2024-03-15', 'YYYY-MM-DD'), 500.00, (SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 42));
-
 
 -- Peuplement de la table TECHNICIEN
 INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) 
@@ -148,15 +127,15 @@ delete from EXPERIENCE;
 delete from GROUPE;
 delete from PUITS;
 
-INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock) 
-VALUES 
-(96, TO_DATE('2024-04-05', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0);
 
-INSERT INTO EXPERIENCE (id_technicien_TECHNICIEN, id_chercheur_CHERCHEUR, NB_GROUPE) 
-VALUES ((SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE id_technicien_TECHNICIEN = 81), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE id_chercheur_CHERCHEUR = 81),1);
 
-delete from  plaque;
-delete from lot; 
+INSERT INTO EXPERIENCE (TYPE_EXP_EXPERIENCE,daTE_commande_commande,ORDRE_PRIORITE_COMMANDE,id_technicien_TECHNICIEN, id_chercheur_CHERCHEUR, NB_GROUPE) 
+VALUES ('opacimétrique',sysdate,1,(SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE id_technicien_TECHNICIEN = 81), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE id_chercheur_CHERCHEUR = 81),1);
+
+update experience
+set TYPE_EXP_EXPERIENCE='opacimétrique'
+where ID_EXP_EXPERIENCE =754;
+
 UPDATE puits
 SET 
     X_PUITS_PUITS = 10,
@@ -169,7 +148,7 @@ SET
     BD_PIXEL = 10,
     TM_PIXEL = null,
     TD_PIXEL = null
-WHERE ID_PUITS_PUITS = 61;
+WHERE ID_PUITS_PUITS = 48841;
 UPDATE puits
 SET 
     X_PUITS_PUITS = 20,
@@ -180,17 +159,24 @@ SET
     VD_PIXEL = 10,
     BM_PIXEL = 10,
     BD_PIXEL = 10
-WHERE ID_PUITS_PUITS = 62;
+WHERE ID_PUITS_PUITS = 48842;
 UPDATE puits
 SET 
-    X_PUITS_PUITS = 20,
-    Y_PUITS_PUITS = 20,
-    RM_PIXEL = null,
-    RD_PIXEL = null,
-    VM_PIXEL = null,
-    VD_PIXEL = null,
-    BM_PIXEL = null,
-    BD_PIXEL = null,
+    X_PUITS_PUITS = 30,
+    Y_PUITS_PUITS = 30,
+    RM_PIXEL = 10,
+    RD_PIXEL = 20,
+    VM_PIXEL = 10,
+    VD_PIXEL = 10,
+    BM_PIXEL = 10,
+    BD_PIXEL = 10
+WHERE ID_PUITS_PUITS = 48843;
+
+
+UPDATE puits
+SET 
     TM_PIXEL = 10,
     TD_PIXEL = 10
-WHERE ID_PUITS_PUITS = 157;
+WHERE ID_PUITS_PUITS = 48868;
+
+

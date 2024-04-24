@@ -1,381 +1,3 @@
-DECLARE 
-  existe_LOT INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_LOT FROM user_tables WHERE table_name = upper('LOT') ;
-
-  IF existe_LOT > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE LOT CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table LOT;
-CREATE TABLE LOT (
-    code_barre_lot_LOT INT NOT NULL,
-    type_plaque_LOT INT,
-    date_livraison_LOT DATE,
-    vendeur_LOT VARCHAR2(250),
-    fabricant_LOT VARCHAR2(250),
-    stock_precedent_Stock INT,
-    stock_actuel_Stock INT,
-    PRIMARY KEY (code_barre_lot_LOT)
-);
-
-drop sequence seq_lot;
-CREATE SEQUENCE SEQ_LOT ;
-
-drop trigger trig_lot;
-CREATE TRIGGER TRIG_LOT BEFORE INSERT ON LOT FOR EACH ROW 
- BEGIN 
- SELECT SEQ_LOT.NEXTVAL INTO :new.code_barre_lot_LOT FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_PLAQUE INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_PLAQUE FROM user_tables WHERE table_name = upper('PLAQUE') ;
-
-  IF existe_PLAQUE > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE PLAQUE CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table plaque;
-CREATE TABLE PLAQUE (
-    code_barre_plaque_PLAQUE int NOT NULL,
-    code_barre_lot_LOT INT, -- Remplacé "NOT FOUND" par "INT"
-    PRIMARY KEY (code_barre_plaque_PLAQUE)
-);
-
-drop sequence seq_plaque;
-CREATE SEQUENCE SEQ_PLAQUE ;
-
-drop trigger TRIG_PLAQUE;
-CREATE TRIGGER TRIG_PLAQUE BEFORE INSERT ON PLAQUE FOR EACH ROW 
- BEGIN 
- SELECT SEQ_PLAQUE.NEXTVAL INTO :new.code_barre_plaque_PLAQUE FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_EQUIPE INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_EQUIPE FROM user_tables WHERE table_name = upper('EQUIPE') ;
-
-  IF existe_EQUIPE > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE EQUIPE CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table equipe;
-CREATE TABLE EQUIPE (id_equipe_EQUIPE INT NOT NULL,
-adresse VARCHAR2(250),
-PRIMARY KEY (id_equipe_EQUIPE));
-
-drop sequence SEQ_EQUIPE;
-CREATE SEQUENCE SEQ_EQUIPE ;
-
-drop trigger TRIG_EQUIPE;
-CREATE TRIGGER TRIG_EQUIPE BEFORE INSERT ON EQUIPE FOR EACH ROW 
- BEGIN 
- SELECT SEQ_EQUIPE.NEXTVAL INTO :new.id_equipe_EQUIPE FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_FACTURE INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_FACTURE FROM user_tables WHERE table_name = upper('FACTURE') ;
-
-  IF existe_FACTURE > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE FACTURE CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table facture;
-CREATE TABLE FACTURE (
-    id_facture_FACTURE INT NOT NULL,
-    date_facture_FACTURE DATE,
-    cout_facture_FACTURE FLOAT,
-    id_equipe_EQUIPE INT, -- Remplacé "**NOT FOUND**" par "INT"
-    PRIMARY KEY (id_facture_FACTURE)
-);
-
-drop sequence SEQ_FACTURE;
-CREATE SEQUENCE SEQ_FACTURE ;
-
-drop trigger TRIG_FACTURE;
-CREATE TRIGGER TRIG_FACTURE BEFORE INSERT ON FACTURE FOR EACH ROW 
- BEGIN 
- SELECT SEQ_FACTURE.NEXTVAL INTO :new.id_facture_FACTURE FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_TECHNICIEN INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_TECHNICIEN FROM user_tables WHERE table_name = upper('TECHNICIEN') ;
-
-  IF existe_TECHNICIEN > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE TECHNICIEN CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table technicien;
-CREATE TABLE TECHNICIEN (id_technicien_TECHNICIEN INT NOT NULL,
-etat_technicien_TECHNICIEN VARCHAR2(250),
-PRIMARY KEY (id_technicien_TECHNICIEN));
-
-drop sequence SEQ_TECHNICIEN;
-CREATE SEQUENCE SEQ_TECHNICIEN ;
-
-drop trigger TRIG_TECHNICIEN;
-CREATE TRIGGER TRIG_TECHNICIEN BEFORE INSERT ON TECHNICIEN FOR EACH ROW 
- BEGIN 
- SELECT SEQ_TECHNICIEN.NEXTVAL INTO :new.id_technicien_TECHNICIEN FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_PUITS INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_PUITS FROM user_tables WHERE table_name = upper('PUITS') ;
-
-  IF existe_PUITS > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE PUITS CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table puits;
-CREATE TABLE PUITS (id_puits_PUITS INT NOT NULL,
-x_puits_PUITS FLOAT,
-y_puits_PUITS FLOAT,
-resultat_puits_PUITS VARCHAR2(250),
-x_pixel_PIXEL FLOAT,
-y_pixel_PIXEL FLOAT,
-n_PIXEL INT,
-Rm_PIXEL FLOAT,
-Rd_PIXEL FLOAT,
-Vm_PIXEL FLOAT,
-Vd_PIXEL FLOAT,
-Bm_PIXEL FLOAT,
-Bd_PIXEL FLOAT,
-Tm_PIXEL FLOAT,
-Td_PIXEL FLOAT,
-id_groupe_GROUPE INT, -- Remplacé "**NOT FOUND**" par "INT"
-PRIMARY KEY (id_puits_PUITS));
-
-
-drop sequence SEQ_PUITS;
-CREATE SEQUENCE SEQ_PUITS ;
-
-drop trigger TRIG_PUITS;
-CREATE TRIGGER TRIG_PUITS BEFORE INSERT ON PUITS FOR EACH ROW 
- BEGIN 
- SELECT SEQ_PUITS.NEXTVAL INTO :new.id_puits_PUITS FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_CHERCHEUR INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_CHERCHEUR FROM user_tables WHERE table_name = upper('CHERCHEUR') ;
-
-  IF existe_CHERCHEUR > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE CHERCHEUR CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table chercheur;
-CREATE TABLE CHERCHEUR (id_chercheur_CHERCHEUR INT NOT NULL,
-id_equipe_EQUIPE INT, -- Remplacé "**NOT FOUND**" par "INT"
-PRIMARY KEY (id_chercheur_CHERCHEUR));
-
-drop sequence SEQ_CHERCHEUR;
-CREATE SEQUENCE SEQ_CHERCHEUR ;
-
-drop trigger TRIG_CHERCHEUR;
-CREATE TRIGGER TRIG_CHERCHEUR BEFORE INSERT ON CHERCHEUR FOR EACH ROW 
- BEGIN 
- SELECT SEQ_CHERCHEUR.NEXTVAL INTO :new.id_chercheur_CHERCHEUR FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_PHOTOMETRE INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_PHOTOMETRE FROM user_tables WHERE table_name = upper('PHOTOMETRE') ;
-
-  IF existe_PHOTOMETRE > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE PHOTOMETRE CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table PHOTOMETRE;
-CREATE TABLE PHOTOMETRE (id_photometre_PHOTOMETRE INT NOT NULL,
-etat_photometre_PHOTOMETRE VARCHAR2(250),
-PRIMARY KEY (id_photometre_PHOTOMETRE));
-
-drop sequence SEQ_PHOTOMETRE;
-CREATE SEQUENCE SEQ_PHOTOMETRE ;
-
-drop trigger TRIG_PHOTOMETRE;
-CREATE TRIGGER TRIG_PHOTOMETRE BEFORE INSERT ON PHOTOMETRE FOR EACH ROW 
- BEGIN 
- SELECT SEQ_PHOTOMETRE.NEXTVAL INTO :new.id_photometre_PHOTOMETRE FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_EXPERIENCE INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_EXPERIENCE FROM user_tables WHERE table_name = upper('EXPERIENCE') ;
-
-  IF existe_EXPERIENCE > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE EXPERIENCE CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table experience;
-CREATE TABLE EXPERIENCE (id_exp_EXPERIENCE INT NOT NULL,
-statut_exp_EXPERIENCE VARCHAR2(250),
-nb_prog_EXPERIENCE INT,
-date_debut_EXPERIENCE DATE,
-date_fin_EXPERIENCE DATE,
-date_transmission_resultats_EXPERIENCE DATE,
-cout_exp_EXPERIENCE FLOAT,
-type_exp_EXPERIENCE VARCHAR2(250),
-moyenne_globale_EXPERIENCE FLOAT,
-ecart_type_global_EXPERIENCE FLOAT,
-a1_EXPERIENCE INT,
-a2_EXPERIENCE INT,
-a3_EXPERIENCE INT,
-coef_surcout_EXPERIENCE INT,
-frequence_obs_EXPERIENCE INT,
-date_commande_COMMANDE DATE,
-ordre_priorite_COMMANDE INT,
-id_technicien_TECHNICIEN INT, -- Remplacé "**NOT FOUND**" par "INT"
-facture_id_facture_facture INT, -- Remplacé "**NOT FOUND**" par "INT"
-id_chercheur_CHERCHEUR INT, -- Remplacé "**NOT FOUND**" par "INT"
-id_position_ATTENTE INT,
-PRIMARY KEY (id_exp_EXPERIENCE));
-
-drop sequence SEQ_EXPERIENCE;
-CREATE SEQUENCE SEQ_EXPERIENCE ;
-
-drop trigger TRIG_EXPERIENCE;
-CREATE TRIGGER TRIG_EXPERIENCE BEFORE INSERT ON EXPERIENCE FOR EACH ROW 
- BEGIN 
- SELECT SEQ_EXPERIENCE.NEXTVAL INTO :new.id_exp_EXPERIENCE FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_GROUPE INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_GROUPE FROM user_tables WHERE table_name = upper('GROUPE') ;
-
-  IF existe_GROUPE > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE GROUPE CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table groupe;
-CREATE TABLE GROUPE (id_groupe_GROUPE INT NOT NULL,
-nb_plaques_GROUPE INT,
-moyenne_grp_GROUPE FLOAT,
-ecart_type_grp_GROUPE FLOAT,
-acceptation_GROUPE NUMBER(1),
-x_grp_GROUPE FLOAT,
-y_grp_GROUPE FLOAT,
-code_barre_plaque_PLAQUE int,
-id_exp_EXPERIENCE INT,
-PRIMARY KEY (id_groupe_GROUPE));
-
-ALTER TABLE GROUPE ADD nb_slots_groupe INT;
-
-drop sequence SEQ_GROUPE;
-CREATE SEQUENCE SEQ_GROUPE ;
-
-drop trigger TRIG_GROUPE;
-CREATE TRIGGER TRIG_GROUPE BEFORE INSERT ON GROUPE FOR EACH ROW 
- BEGIN 
- SELECT SEQ_GROUPE.NEXTVAL INTO :new.id_groupe_GROUPE FROM DUAL ;
-
- END ;
-
-DECLARE 
-  existe_ATTENTE INTEGER ;
-
-BEGIN 
-  SELECT count(*) INTO existe_ATTENTE FROM user_tables WHERE table_name = upper('ATTENTE') ;
-
-  IF existe_ATTENTE > 0 THEN 
-    EXECUTE IMMEDIATE 'DROP TABLE ATTENTE CASCADE CONSTRAINTS' ;
-
-  END IF ;
-
-END ;
-
-drop table attente;
-CREATE TABLE ATTENTE (id_position_ATTENTE INT NOT NULL,
-position_ATTENTE INT,
-id_photometre_PHOTOMETRE INT, -- Remplacé "**NOT FOUND**" par "INT"
-PRIMARY KEY (id_position_ATTENTE));
-
-drop sequence SEQ_ATTENTE;
-CREATE SEQUENCE SEQ_ATTENTE ;
-
-drop trigger TRIG_ATTENTE;
-CREATE TRIGGER TRIG_ATTENTE BEFORE INSERT ON ATTENTE FOR EACH ROW 
- BEGIN 
- SELECT SEQ_ATTENTE.NEXTVAL INTO :new.id_position_ATTENTE FROM DUAL ;
-
- END ;
-
-ALTER TABLE PLAQUE ADD CONSTRAINT FK_PLAQUE_code_barre_lot_LOT FOREIGN KEY (code_barre_lot_LOT) REFERENCES LOT (code_barre_lot_LOT);
-ALTER TABLE FACTURE ADD CONSTRAINT FK_FACTURE_id_equipe_EQUIPE FOREIGN KEY (id_equipe_EQUIPE) REFERENCES EQUIPE (id_equipe_EQUIPE);
-ALTER TABLE PUITS ADD CONSTRAINT FK_PUITS_id_groupe_GROUPE FOREIGN KEY (id_groupe_GROUPE) REFERENCES GROUPE (id_groupe_GROUPE);
-ALTER TABLE CHERCHEUR ADD CONSTRAINT FK_CHERCHEUR_id_equipe_EQUIPE FOREIGN KEY (id_equipe_EQUIPE) REFERENCES EQUIPE (id_equipe_EQUIPE);
-ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_id_technicien_TECHNICIEN FOREIGN KEY (id_technicien_TECHNICIEN) REFERENCES TECHNICIEN (id_technicien_TECHNICIEN);
-ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_facture_id_facture_facture FOREIGN KEY (facture_id_facture_facture) REFERENCES FACTURE (id_facture_FACTURE);
-ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_id_chercheur_CHERCHEUR FOREIGN KEY (id_chercheur_CHERCHEUR) REFERENCES CHERCHEUR (id_chercheur_CHERCHEUR);
-ALTER TABLE EXPERIENCE ADD CONSTRAINT FK_EXPERIENCE_id_position_ATTENTE FOREIGN KEY (id_position_ATTENTE) REFERENCES ATTENTE (id_position_ATTENTE);
-ALTER TABLE GROUPE ADD CONSTRAINT FK_GROUPE_code_barre_plaque_PLAQUE FOREIGN KEY (code_barre_plaque_PLAQUE) REFERENCES PLAQUE (code_barre_plaque_PLAQUE);
-ALTER TABLE GROUPE ADD CONSTRAINT FK_GROUPE_id_exp_EXPERIENCE FOREIGN KEY (id_exp_EXPERIENCE) REFERENCES EXPERIENCE (id_exp_EXPERIENCE);
-ALTER TABLE ATTENTE ADD CONSTRAINT FK_ATTENTE_id_photometre_PHOTOMETRE FOREIGN KEY (id_photometre_PHOTOMETRE) REFERENCES PHOTOMETRE (id_photometre_PHOTOMETRE);
-
-
 ALTER TABLE LOT
 ADD CONSTRAINT CHK_TypePlaque CHECK (type_plaque_LOT IN (96, 384));
 
@@ -671,7 +293,7 @@ BEGIN
     END IF;
 END;
 /
-
+drop trigger TRG_changement_technicien
 CREATE OR REPLACE TRIGGER TRG_changement_technicien
 BEFORE UPDATE ON EXPERIENCE
 FOR EACH ROW
@@ -679,36 +301,15 @@ DECLARE
     l_statut_old VARCHAR2(250);
 BEGIN
     -- Vérifier si le statut de l'expérience est à "renouveler" et le nouveau technicien est différent de l'ancien
-    IF :OLD.statut_exp_EXPERIENCE = 'renouveler' AND :NEW.id_technicien_TECHNICIEN <> :OLD.id_technicien_TECHNICIEN THEN
+    IF :OLD.statut_exp_EXPERIENCE = 'ratée' AND :NEW.id_technicien_TECHNICIEN <> :OLD.id_technicien_TECHNICIEN THEN
         -- Si la condition est vraie, autoriser la mise à jour
         NULL;
     ELSE
         -- Sinon, annuler la mise à jour en levant une exception
-        RAISE_APPLICATION_ERROR(-20001, 'Impossible de changer le technicien sauf si le statut de l''expérience est "à renouveler"');
+        RAISE_APPLICATION_ERROR(-20001, 'Impossible de changer le technicien sauf si le statut de l''expérience est "ratée"');
     END IF;
 END;
 /
-
-CREATE OR REPLACE TRIGGER TRG_CalculNbPlaques
-BEFORE INSERT OR UPDATE ON Experience
-FOR EACH ROW
-DECLARE
-    v_nb_plaques INT;
-    v_nb_slots INT := :NEW.nb_slots_groupe;
-    v_nb_groupe int := :NEW.nb_groupe;
-    v_type_plaque INT;
-BEGIN
-    IF CEIL(v_nb_slots*v_nb_groupe) < 96.0 THEN
-        v_nb_plaques := CEIL(v_nb_slots / 96.0);
-    ELSE
-        v_nb_plaques := CEIL(v_nb_slots / 384.0);
-    END IF;
-
-    -- Mettre à jour le nombre de plaques dans le groupe
-   -- :NEW.nb_plaques_groupe := v_nb_plaques;
-END;
-/
-
 
 CREATE OR REPLACE TRIGGER TRG_MajFileAttente
 BEFORE INSERT ON ATTENTE
@@ -752,7 +353,7 @@ END;
 
 --insertion dans la la table groupe apres la création d'une experience et que celle ci est ratacher a un technicien
 CREATE OR REPLACE TRIGGER trg_auto_insert_groupe
-AFTER INSERT ON experience
+After INSERT ON experience
 FOR EACH ROW
 DECLARE
     l_id_technicien NUMBER;
@@ -800,7 +401,25 @@ BEGIN
             INSERT INTO groupe (ID_EXP_EXPERIENCE, CODE_BARRE_PLAQUE_PLAQUE)
             VALUES (:NEW.ID_EXP_EXPERIENCE, l_code_barre_plaque_plaque);
         END LOOP;
+        
     END IF;
+END;
+/
+
+CREATE OR REPLACE TRIGGER trg_maj_date
+BEFORE insert or UPDATE ON experience
+FOR EACH ROW
+declare
+l_id_technicien NUMBER;
+BEGIN
+ l_id_technicien := :NEW.ID_TECHNICIEN_TECHNICIEN;
+
+    -- Vérifier si l'ID_TECHNICIEN_TECHNICIEN est non nul
+    IF l_id_technicien IS NOT NULL THEN
+    -- Mise à jour de la date de début de l'expérience
+    :NEW.DATE_DEBUT_EXPERIENCE := SYSDATE;
+    :NEW.STATUT_EXP_EXPERIENCE := 'en cours';
+    end if;
 END;
 /
 
@@ -867,10 +486,13 @@ CREATE OR REPLACE PROCEDURE calculer_moyennes(p_id_groupe IN puits.id_groupe_gro
     v_ecart_type_vd NUMBER;
     v_ecart_type_bd NUMBER;
     v_ecart_type_td NUMBER;
-    v_ecart_type_global NUMBER;
+    v_ecart_type_globale NUMBER;
     v_x_grp_groupe NUMBER;
     v_y_grp_groupe NUMBER;
     v_acceptation NUMBER;
+    v_total_groupe NUMBER;
+    v_total_acceptation NUMBER;
+    v_TYPE_EXP_EXPERIENCE experience.TYPE_EXP_EXPERIENCE%TYPE;
 BEGIN
     -- Calcul des moyennes pour chaque colonne
     SELECT AVG(X_PUITS_PUITS), AVG(Y_PUITS_PUITS),
@@ -906,30 +528,73 @@ BEGIN
         ACCEPTATION_GROUPE = v_acceptation
     WHERE ID_GROUPE_GROUPE = p_id_groupe;
 
+
     -- Calcul de la moyenne globale de l'expérience
-    SELECT AVG(MOYENNE_GRP_R + MOYENNE_GRP_V + MOYENNE_GRP_B + MOYENNE_GRP_T)
+    SELECT AVG(MOYENNE_GRP_R + MOYENNE_GRP_V + MOYENNE_GRP_B)
     INTO v_moyenne_globale
     FROM groupe
     WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
-
-    -- Mise à jour de la moyenne globale dans la table expérience
-    UPDATE experience
-    SET MOYENNE_GLOBALE_EXPERIENCE = v_moyenne_globale
+    
+    -- Calcul de la moyenne globale de l'écart-type de l'expérience
+    SELECT AVG(ECART_TYPE_GRP_R + ECART_TYPE_GRP_V + ECART_TYPE_GRP_B)
+    INTO v_ecart_type_globale
+    FROM groupe
+    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+    
+-- Récupération du type d'expérience de la table experience
+    SELECT TYPE_EXP_EXPERIENCE INTO v_TYPE_EXP_EXPERIENCE
+    FROM experience
+    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+    
+    If v_TYPE_EXP_EXPERIENCE ='opacimétrique' then
+        -- Mise à jour de la moyenne globale dans la table expérience
+        UPDATE experience
+        SET MOYENNE_GLOBALE_EXPERIENCE = v_moyenne_tm, 
+        ECART_TYPE_GLOBAL_EXPERIENCE = v_ecart_type_td
+        WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+    else
+        UPDATE experience
+        SET MOYENNE_GLOBALE_EXPERIENCE = v_moyenne_globale, 
+        ECART_TYPE_GLOBAL_EXPERIENCE = v_ecart_type_globale
+        WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+    end if;    
+    
+    -- Mise à jour de la date de transmission des résultats de l'expérience
+    UPDATE Experience
+    SET DATE_TRANSMISSION_RESULTATS_EXPERIENCE = SYSDATE
     WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
 
-    -- Calcul de la moyenne globale de l'écart-type de l'expérience
-    SELECT AVG(ECART_TYPE_GRP_R + ECART_TYPE_GRP_V + ECART_TYPE_GRP_B + ECART_TYPE_GRP_T)
-    INTO v_ecart_type_global
+    -- Calcul du nombre total de groupes associés à l'expérience
+    SELECT COUNT(*)
+    INTO v_total_groupe
     FROM groupe
     WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
 
-    -- Mise à jour de l'écart-type global dans la table expérience
-    UPDATE experience
-    SET ECART_TYPE_GLOBAL_EXPERIENCE = v_ecart_type_global
-    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+    -- Calcul du nombre total de groupes ayant une acceptation égale à 1
+    SELECT COUNT(*)
+    INTO v_total_acceptation
+    FROM groupe
+    WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe)
+    AND ACCEPTATION_GROUPE = 1;
+
+    -- Mise à jour du statut de l'expérience en fonction du nombre total de groupes et du nombre de groupes acceptés
+    IF v_total_groupe = v_total_acceptation THEN
+        UPDATE experience
+        SET 
+            STATUT_EXP_EXPERIENCE = 'effectuée',
+            DATE_FIN_EXPERIENCE = SYSDATE
+        WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+    ELSE
+        UPDATE experience
+        SET STATUT_EXP_EXPERIENCE = 'ratée',
+            Nb_PROG_EXPERIENCE = Nb_PROG_EXPERIENCE + 1
+        WHERE ID_EXP_EXPERIENCE = (SELECT ID_EXP_EXPERIENCE FROM groupe WHERE ID_GROUPE_GROUPE = p_id_groupe);
+    END IF;
 END;
 /
 
+
+drop trigger TRG_CalculCoefSurcout
 CREATE OR REPLACE TRIGGER TRG_CalculCoefSurcout
 BEFORE UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
