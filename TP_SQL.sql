@@ -192,17 +192,6 @@ BEGIN
             FROM GROUPE
             WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
         );
-
-        -- Vérification des conditions pour définir le resultat_puits à 'violet' ou 'jaune'
-        IF (:NEW.Rm_EXPERIENCE BETWEEN 118 AND 138 OR :NEW.Rm_EXPERIENCE BETWEEN 228 AND 248) AND
-           (:NEW.Vm_EXPERIENCE BETWEEN 0 AND 20 OR :NEW.Vm_EXPERIENCE BETWEEN 120 AND 140) AND
-           (:NEW.Bm_EXPERIENCE BETWEEN 118 AND 138 OR :NEW.Bm_EXPERIENCE BETWEEN 218 AND 238) THEN
-            :NEW.resultat_puits_PUITS := 'violet';
-        ELSIF (:NEW.Rm_EXPERIENCE BETWEEN 245 AND 255) AND
-              (:NEW.Vm_EXPERIENCE BETWEEN 245 AND 255) AND
-              (:NEW.Bm_EXPERIENCE BETWEEN 41 AND 61) THEN
-            :NEW.resultat_puits_PUITS := 'jaune';
-        END IF;
     END IF;
 END;
 /
@@ -225,12 +214,6 @@ BEGIN
             FROM GROUPE
             WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
         );
-
-        IF :NEW.Tm_EXPERIENCE >= 125 THEN
-            :NEW.resultat_puits_PUITS := 'opaque';
-        ELSE
-            :NEW.resultat_puits_PUITS := 'transparent';
-        END IF;
     END IF;
 END;
 /
