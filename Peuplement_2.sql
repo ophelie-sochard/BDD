@@ -139,3 +139,20 @@ VALUES ('colorimétrique',sysdate,4,(SELECT id_technicien_TECHNICIEN FROM TECHNIC
        
 -- Peuplement de GROUPE et PUITS automatique
 
+
+-- Exemple de MAJ d'une expérience
+UPDATE EXPERIENCE
+SET TYPE_EXP_EXPERIENCE='colorimétrique'
+WHERE ID_EXP_EXPERIENCE = ((SELECT MIN(ID_EXP_EXPERIENCE) FROM EXPERIENCE));
+
+UPDATE PUITS
+SET 
+    X_PUITS_PUITS = 10,
+    Y_PUITS_PUITS = 10,
+    RM_PIXEL = 10,
+    RD_PIXEL = 10,
+    VM_PIXEL = 10,
+    VD_PIXEL = 10,
+    BM_PIXEL = 10,
+    BD_PIXEL = 10
+WHERE ID_PUITS_PUITS = ((SELECT MAX(ID_PUITS_PUITS) FROM PUITS));
