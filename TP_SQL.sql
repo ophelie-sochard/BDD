@@ -156,7 +156,7 @@ CREATE OR REPLACE TRIGGER TRG_puits_colorimetrie
 AFTER INSERT OR UPDATE ON EXPERIENCE
 FOR EACH ROW
 BEGIN
-    IF :NEW.statut_exp_EXPERIENCE = 'colorimétrique' THEN
+    IF :NEW.type_exp_EXPERIENCE = 'colorimétrique' THEN
         -- Mise à jour des champs Tm_PIXEL et Td_PIXEL à NULL dans PUITS
         UPDATE PUITS
         SET Tm_PIXEL = NULL,
@@ -166,16 +166,6 @@ BEGIN
             FROM GROUPE
             WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
         );
-        -- Vérification des conditions pour définir le resultat_puits à 'violet' ou 'jaune'
-        IF (:NEW.Rm_EXPERIENCE BETWEEN 118 AND 138 OR :NEW.Rm_EXPERIENCE BETWEEN 228 AND 248) AND
-           (:NEW.Vm_EXPERIENCE BETWEEN 0 AND 20 OR :NEW.Vm_EXPERIENCE BETWEEN 120 AND 140) AND
-           (:NEW.Bm_EXPERIENCE BETWEEN 118 AND 138 OR :NEW.Bm_EXPERIENCE BETWEEN 218 AND 238) THEN
-            :NEW.resultat_puits_PUITS := 'violet';
-        ELSIF (:NEW.Rm_EXPERIENCE BETWEEN 245 AND 255) AND
-              (:NEW.Vm_EXPERIENCE BETWEEN 245 AND 255) AND
-              (:NEW.Bm_EXPERIENCE BETWEEN 41 AND 61) THEN
-            :NEW.resultat_puits_PUITS := 'jaune';
-        END IF;
     END IF;
 END;
 /
@@ -184,7 +174,7 @@ CREATE OR REPLACE TRIGGER TRG_puits_opacimetrie
 AFTER INSERT OR UPDATE ON EXPERIENCE
 FOR EACH ROW
 BEGIN
-    IF :NEW.statut_exp_EXPERIENCE = 'opacimétrique' THEN
+    IF :NEW.type_exp_EXPERIENCE = 'opacimétrique' THEN
         -- Mise à jour des champs Tm_PIXEL et Td_PIXEL à NULL dans PUITS
         UPDATE PUITS
         SET Rm_PIXEL = NULL,
@@ -198,12 +188,6 @@ BEGIN
             FROM GROUPE
             WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
         );
-
-        IF :NEW.Tm_EXPERIENCE >= 125 THEN
-            :NEW.resultat_puits_PUITS := 'opaque';
-        ELSE
-            :NEW.resultat_puits_PUITS := 'transparent';
-        END IF;
     END IF;
 END;
 /
@@ -245,7 +229,6 @@ BEGIN
     END IF;
 END;
 /
-
 drop trigger TRG_changement_technicien
 CREATE OR REPLACE TRIGGER TRG_changement_technicien
 BEFORE UPDATE ON EXPERIENCE
@@ -253,13 +236,16 @@ FOR EACH ROW
 DECLARE
     l_statut_old VARCHAR2(250);
 BEGIN
-    -- Vérifier si le statut de l'expérience est à "renouveler" et le nouveau technicien est différent de l'ancien
-    IF :OLD.statut_exp_EXPERIENCE = 'ratée' AND :NEW.id_technicien_TECHNICIEN <> :OLD.id_technicien_TECHNICIEN THEN
-        -- Si la condition est vraie, autoriser la mise à jour
+    -- Vérifier si le statut de l'expérience est passé à "ratée"
+    IF :NEW.statut_exp_EXPERIENCE = 'ratée' THEN
+        -- Si le statut est passé à "ratée", alors autoriser la mise à jour du technicien
         NULL;
     ELSE
-        -- Sinon, annuler la mise à jour en levant une exception
-        RAISE_APPLICATION_ERROR(-20001, 'Impossible de changer le technicien sauf si le statut de l''expérience est "ratée"');
+        -- Sinon, vérifier si le technicien a changé
+        IF :NEW.id_technicien_TECHNICIEN <> :OLD.id_technicien_TECHNICIEN THEN
+            -- Si le technicien a changé alors annuler la mise à jour en levant une exception
+            RAISE_APPLICATION_ERROR(-20001, 'Impossible de changer le technicien sauf si le statut de l''expérience est "ratée"');
+        END IF;
     END IF;
 END;
 /
@@ -547,7 +533,8 @@ END;
 /
 
 
-drop trigger TRG_CalculCoefSurcout
+DROP TRIGGER TRG_CalculCoefSurcout;
+
 CREATE OR REPLACE TRIGGER TRG_CalculCoefSurcout
 BEFORE UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
@@ -556,16 +543,17 @@ DECLARE
     v_total_experiences_attente INT;
     v_experiences_doublees INT;
 BEGIN
-    -- Vérifier si le statut de l'expérience est 'en attente'
-    IF :NEW.statut_exp_EXPERIENCE = 'en attente' THEN
+    -- Vérifier si le statut de l'expérience est 'en attente' et si l'ordre de priorité est > 0
+    IF :NEW.statut_exp_EXPERIENCE = 'en attente' AND :NEW.ordre_priorite_commande > 0 THEN
         -- Récupérer le nombre total d'expériences en attente de programmation
         SELECT COUNT(*) INTO v_total_experiences_attente
         FROM ATTENTE;
 
-        -- Récupérer le nombre d'expériences doublées par l'expérience en cours
+        -- Récupérer le nombre d'expériences avec un ordre de priorité plus faible que la nouvelle expérience
         SELECT COUNT(*) INTO v_experiences_doublees
-        FROM ATTENTE
-        WHERE id_photometre_PHOTOMETRE = :NEW.id_photometre_PHOTOMETRE
+        FROM EXPERIENCE
+        WHERE statut_exp_EXPERIENCE = 'en attente'
+        AND ordre_priorite_commande < :NEW.ordre_priorite_commande;
 
         -- Calcul du coefficient
         IF v_total_experiences_attente = 0 THEN
@@ -576,7 +564,7 @@ BEGIN
 
         -- Mettre à jour le coefficient de surcoût dans la table EXPERIENCE
         :NEW.coef_surcout_experience := v_coefficient;
-
+        
         -- Mettre à jour le prix total de l'expérience
         :NEW.cout_EXP_EXPERIENCE := :NEW.cout_EXP_EXPERIENCE * v_coefficient;
     END IF;
