@@ -19,6 +19,15 @@ ADD CONSTRAINT CHK_ValCouleurs CHECK (
     Td_PIXEL >= 0 AND Td_PIXEL <= 255
 );
 
+ALTER TABLE PHOTOMETRE
+ADD CONSTRAINT CHK_EtatPhotometre CHECK (etat_photometre_PHOTOMETRE IN ('vide', 'occupé', 'en panne'));
+
+ALTER TABLE EXPERIENCE
+ADD CONSTRAINT CHK_EtatExperience CHECK (statut_exp_EXPERIENCE IN ('en cours', 'en attente', 'effectuée', 'ratée'));
+
+ALTER TABLE EXPERIENCE
+ADD CONSTRAINT CHK_OrdrePriorite CHECK (ORDRE_PRIORITE_COMMANDE BETWEEN 1 AND 5);
+
 CREATE OR REPLACE TRIGGER TRG_CheckTransmissionExperience
 BEFORE UPDATE ON EXPERIENCE
 FOR EACH ROW
@@ -36,43 +45,11 @@ BEGIN
     END IF;
 END;
 /
-
-ALTER TABLE PHOTOMETRE
-ADD CONSTRAINT CHK_EtatPhotometre CHECK (etat_photometre_PHOTOMETRE IN ('vide', 'occupé', 'en panne'));
-
-ALTER TABLE EXPERIENCE
-ADD CONSTRAINT CHK_EtatExperience CHECK (statut_exp_EXPERIENCE IN ('en cours', 'en attente', 'effectuée', 'ratée'));
-
-ALTER TABLE EXPERIENCE
-ADD CONSTRAINT CHK_OrdrePriorite CHECK (ORDRE_PRIORITE_COMMANDE BETWEEN 1 AND 5);
-
-CREATE OR REPLACE TRIGGER TRG_GROUPE_Refus
-AFTER UPDATE OF acceptation_GROUPE ON GROUPE
-FOR EACH ROW
-BEGIN
-    IF :new.acceptation_GROUPE = 0 THEN
-        UPDATE EXPERIENCE
-        SET statut_exp_EXPERIENCE = 'ratée'
-        WHERE id_exp_EXPERIENCE = : new.id_groupe_GROUPE;
-    END IF;
-END;
-/
-
-CREATE OR REPLACE TRIGGER TRG_LOT_Rachat
-BEFORE UPDATE OF stock_actuel_stock ON LOT
-FOR EACH ROW
-BEGIN
-    IF :new.stock_actuel_stock < :old.stock_precedent_stock THEN
-        :new.stock_actuel_stock := :old.stock_actuel_stock + :new.stock_precedent_stock;
-    END IF;
-END;
-/
-
+-- Mettre à jour le stock actuel du lot à 80 avant l'insertion du lot
 CREATE OR REPLACE TRIGGER trg_plaque_stock_init
 Before INSERT ON LOT
 FOR EACH ROW
 BEGIN
-    -- Mettre à jour le stock actuel du lot à 80 avant l'insertion du lot
     :new.stock_actuel_stock := 80;
 END;
 /
@@ -84,10 +61,8 @@ DECLARE
     l_lot_id NUMBER;
     l_nb_slots NUMBER;
 BEGIN
-   
     l_lot_id := :new.code_barre_lot_LOT;
     l_nb_slots := :new.type_plaque_lot;
-      
     FOR i IN 1..80 LOOP
         INSERT INTO PLAQUE (code_barre_plaque_PLAQUE, code_barre_lot_LOT, nb_slots_libre)
         VALUES (SEQ_PLAQUE.NEXTVAL, l_lot_id, l_nb_slots);
@@ -105,7 +80,6 @@ BEGIN
     SELECT nb_slots_libre INTO l_nb_slots_libre
     FROM PLAQUE
     WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
-
     -- Vérifier si le nombre de slots libres est supérieur à zéro
     IF l_nb_slots_libre > 0 THEN
         -- Décrémenter le nombre de slots libres de trois
@@ -192,7 +166,6 @@ BEGIN
             FROM GROUPE
             WHERE id_exp_EXPERIENCE = :NEW.id_exp_EXPERIENCE
         );
-
         -- Vérification des conditions pour définir le resultat_puits à 'violet' ou 'jaune'
         IF (:NEW.Rm_EXPERIENCE BETWEEN 118 AND 138 OR :NEW.Rm_EXPERIENCE BETWEEN 228 AND 248) AND
            (:NEW.Vm_EXPERIENCE BETWEEN 0 AND 20 OR :NEW.Vm_EXPERIENCE BETWEEN 120 AND 140) AND
@@ -235,27 +208,6 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE TRIGGER trg_maj_stock
-BEFORE INSERT ON LOT
-FOR EACH ROW
-DECLARE
-    l_stock_actuel NUMBER;
-BEGIN
-    -- Sélectionner le stock actuel de l'avant-dernier lot
-    SELECT stock_actuel_Stock
-    INTO l_stock_actuel
-    FROM (
-        SELECT stock_actuel_Stock
-        FROM LOT
-        ORDER BY date_livraison_LOT DESC
-    )
-    WHERE ROWNUM <= 1;
-
-    -- Mettre à jour le stock actuel du nouveau lot
-    :NEW.stock_actuel_Stock := l_stock_actuel + 80;
-END;
-/
-
 CREATE OR REPLACE TRIGGER TRG_ReduireFileAttente
 AFTER UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
@@ -293,6 +245,7 @@ BEGIN
     END IF;
 END;
 /
+
 drop trigger TRG_changement_technicien
 CREATE OR REPLACE TRIGGER TRG_changement_technicien
 BEFORE UPDATE ON EXPERIENCE
