@@ -10,12 +10,12 @@ CREATE TABLE TRACETEST (
 --Test pour savoir si la contrainte sur l'etat du photometre est fonctionelle 
 CREATE OR REPLACE PROCEDURE TestEtatPhotometrePositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donn�es valides
     INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('vide');
     INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('occupé');
     INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('en panne');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    -- Si l'insertion r�ussit, affiche un message indiquant que le test est reussis
     INSERT INTO TRACETEST VALUES ('TestEtatPhotometrePositif', 'ok');
     COMMIT;
 
@@ -29,15 +29,15 @@ END;
 /
 CREATE OR REPLACE PROCEDURE TestEtatPhotometreNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donn�es valides
     INSERT INTO PHOTOMETRE (etat_photometre_PHOTOMETRE) VALUES ('non');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est r ussis
+    -- Si l'insertion r�ussit, affiche un message indiquant que le test a rate
     INSERT INTO TRACETEST VALUES ('TestEtatPhotometreNegatif', 'faux');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a r ussi
+    -- Si une erreur se produit, affiche un message indiquant que le test a reussi
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TRACETEST VALUES ('TestEtatPhotometreNegatif', 'ok');
@@ -48,13 +48,13 @@ END;
 --Test pour savoir si la contrainte sur l'etat de l'experience est fonctionelle 
 CREATE OR REPLACE PROCEDURE TestEtatExperiencePositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnéees valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('en cours');
     INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('en attente');
-    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('effectu e');
-    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('rat e');
+    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('effectu�e');
+    INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('rat�e');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    -- Si l'insertion r�ussit, affiche un message indiquant que le test est reussis
     INSERT INTO TRACETEST VALUES ('TestEtatExperiencePositif', 'ok');
     COMMIT;
 
@@ -69,10 +69,10 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestEtatExperienceNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de donnéees valides
+    -- Tentative d'insertion de donn�ees valides
     INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE) VALUES ('vide');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est rat 
+    -- Si l'insertion r�ussit, affiche un message indiquant que le test est rat 
     INSERT INTO TRACETEST VALUES ('TestEtatExperienceNegatif', 'faux');
     COMMIT;
 
@@ -88,17 +88,17 @@ END;
 --Test pour savoir si la contrainte sur le type d'experience est fonctionelle 
 CREATE OR REPLACE PROCEDURE TestTypeExperiencePositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
-    INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('colorimétrique');
-    INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('opacimétrique');
+    -- Tentative d'insertion de donnees valides
+    INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('colorim�trique');
+    INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('opacim�trique');
 
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est réussi
+    -- Si l'insertion reussit, affiche un message indiquant que le test est reussi
     INSERT INTO TRACETEST VALUES ('TestTypeExperiencePositif', 'ok');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a échoué
+    -- Si une erreur se produit, affiche un message indiquant que le test a echou�e
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TRACETEST VALUES ('TestTypeExperiencePositif', 'faux');
@@ -108,15 +108,15 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestTypeExperienceNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO EXPERIENCE (type_exp_EXPERIENCE) VALUES ('vide');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est rat 
+    -- Si l'insertion reussit, affiche un message indiquant que le test est rate 
     INSERT INTO TRACETEST VALUES ('TestTypeExperienceNegatif', 'faux');
     COMMIT;
 
 EXCEPTION
-    -- Si une erreur se produit, affiche un message indiquant que le test a réussi
+    -- Si une erreur se produit, affiche un message indiquant que le test a reussi
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TRACETEST VALUES ('TestTypeExperienceNegatif', 'ok');
@@ -127,11 +127,11 @@ END;
 --Test pour savoir si la contrainte sur l'etat du technicien est fonctionelle 
 CREATE OR REPLACE PROCEDURE TestEtatTechnicienPositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('libre');
-    INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('occupé');
+    INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('occup�');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    -- Si l'insertion reussit, affiche un message indiquant que le test est reussis
     INSERT INTO TraceTest VALUES ('TestEtatTechnicienPositif', 'ok');
     COMMIT;
 
@@ -147,10 +147,10 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestEtatTechnicienNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('??');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
+    -- Si l'insertion reussit, affiche un message indiquant que le test est rate
     INSERT INTO TraceTest VALUES ('TestEtatTechnicienNegatif', 'faux');
     COMMIT;
 
@@ -166,11 +166,11 @@ END;
 --Test pour savoir si la contrainte sur le type de plaque est fonctionelle 
 CREATE OR REPLACE PROCEDURE TestTypePlaquePositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO LOT (type_plaque_LOT) VALUES ('96');
     INSERT INTO LOT (type_plaque_LOT) VALUES ('384');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    -- Si l'insertion reussit, affiche un message indiquant que le test est reussis
     INSERT INTO TraceTest VALUES ('TestTypePlaquePositif ', 'ok');
     COMMIT;
 
@@ -186,10 +186,10 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestTypePlaqueNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO LOT (type_plaque_LOT) VALUES ('49');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
+    -- Si l'insertion reussit, affiche un message indiquant que le test est rate
     INSERT INTO TraceTest VALUES ('TestTypePlaqueNegatif', 'faux');
     COMMIT;
 
@@ -202,13 +202,13 @@ EXCEPTION
 END;
 /
 
---Test pour savoir si l'ordre de priorité est bien compris entre 1 et 5
+--Test pour savoir si l'ordre de priorite est bien compris entre 1 et 5
 CREATE OR REPLACE PROCEDURE TestOrdrePrioritePositif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO Experience (ordre_priorite_commande) VALUES ('4');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    -- Si l'insertion reussit, affiche un message indiquant que le test est reussis
     INSERT INTO TraceTest VALUES ('TestOrdrePrioritePositif ', 'ok');
     COMMIT;
 
@@ -224,10 +224,10 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestOrdrePrioriteNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO Experience (ordre_priorite_commande) VALUES ('0');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
+    -- Si l'insertion reussit, affiche un message indiquant que le test est rate
     INSERT INTO TraceTest VALUES ('TestOrdrePrioriteNegatif', 'faux');
     COMMIT;
 
@@ -253,7 +253,7 @@ BEGIN
     INSERT INTO Puits (TM_pixel) VALUES ('111');
     INSERT INTO Puits (TD_pixel) VALUES ('111');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    -- Si l'insertion reussit, affiche un message indiquant que le test est reussis
     INSERT INTO TraceTest VALUES ('TestValCouleurPositif ', 'ok');
     COMMIT;
 
@@ -269,7 +269,7 @@ END;
 
 CREATE OR REPLACE PROCEDURE TestValCouleurNegatif deterministic AS
 BEGIN
-    -- Tentative d'insertion de données valides
+    -- Tentative d'insertion de donnees valides
     INSERT INTO Puits (RM_pixel) VALUES ('444');
     INSERT INTO Puits (RD_pixel) VALUES ('444');
     INSERT INTO Puits (VM_pixel) VALUES ('444');
@@ -279,7 +279,7 @@ BEGIN
     INSERT INTO Puits (TM_pixel) VALUES ('444');
     INSERT INTO Puits (TD_pixel) VALUES ('444');
     rollback;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est rate
+    -- Si l'insertion reussit, affiche un message indiquant que le test est rate
     INSERT INTO TraceTest VALUES ('TestValCouleurNegatif', 'faux');
     COMMIT;
 
@@ -292,7 +292,7 @@ EXCEPTION
 END;
 /
 
---Test pour savoir si les plaques sont achetées par lot de 80
+--Test pour savoir si les plaques sont achetees par lot de 80
 CREATE OR REPLACE PROCEDURE TestInsertLot deterministic AS
     v_initial_plaque_count NUMBER;
     v_final_plaque_count NUMBER;
@@ -302,7 +302,7 @@ BEGIN
     SELECT COUNT(*) INTO v_initial_plaque_count FROM PLAQUE;
     -- Insertion d'un lot
     INSERT INTO LOT (code_barre_lot_LOT) VALUES (14569);
-    -- Récupération de l'id du lot
+    -- Recuperation de l'id du lot
     SELECT code_barre_lot_LOT INTO v_lot_id FROM LOT WHERE ROWNUM = 1 ORDER BY code_barre_lot_LOT DESC;
     -- Nombre final de plaques
     SELECT COUNT(*) INTO v_final_plaque_count FROM PLAQUE;
@@ -316,25 +316,25 @@ EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TraceTest VALUES ('TestInsertLot', 'faux');
-        RAISE_APPLICATION_ERROR(-20001, 'Le test a échoué : Le nombre de plaques n''a pas augmenté de 80 après l''insertion du lot.');
+        RAISE_APPLICATION_ERROR(-20001, 'Le test a echoue : Le nombre de plaques n''a pas augmente de 80 apres l''insertion du lot.');
         COMMIT;
 END;
 /
 
---Test pour savoir si il y a un rachat de plaques quand le stock est inférieur au nombre de plaque utilisé le dernier trimestre 
+--Test pour savoir si il y a un rachat de plaques quand le stock est inferieur au nombre de plaque utilise le dernier trimestre 
 CREATE OR REPLACE PROCEDURE TestTriggerLotRachat deterministic AS
     v_old_stock_precedent_stock NUMBER;
     v_new_stock_precedent_stock NUMBER;
     v_new_stock_actuel_stock NUMBER;
 BEGIN
-    -- Insérer un nouveau lot
+    -- Inserer un nouveau lot
     INSERT INTO LOT (stock_precedent_stock, stock_actuel_stock) VALUES (100, 120);
-    -- Récupérer les valeurs avant la maj
+    -- Recuperer les valeurs avant la maj
     SELECT stock_precedent_stock, stock_actuel_stock INTO v_old_stock_precedent_stock, v_new_stock_actuel_stock
     FROM LOT WHERE ROWNUM = 1 ORDER BY code_barre_lot_LOT DESC;
-    -- Mettre à jour le stock actuel
+    -- Mettre a� jour le stock actuel
     UPDATE LOT SET stock_actuel_stock = 90 WHERE ROWNUM = 1;
-    -- Récupérer les nouvelles valeurs après la maj
+    -- Recuperer les nouvelles valeurs apres la maj
     SELECT stock_precedent_stock, stock_actuel_stock INTO v_new_stock_precedent_stock, v_new_stock_actuel_stock
     FROM LOT WHERE ROWNUM = 1 ORDER BY code_barre_lot_LOT DESC;
 
@@ -347,12 +347,12 @@ EXCEPTION
     WHEN OTHERS THEN
         ROLLBACK;
         INSERT INTO TraceTest VALUES ('TestTriggerLotRachat', 'faux');
-        RAISE_APPLICATION_ERROR(-20001, 'Le test a échoué : Aucun lot n'a été racheté');
+        RAISE_APPLICATION_ERROR(-20001, 'Le test a echoue : Aucun lot n'a ete rachete');
         COMMIT;
 END;
 /
 
--- Test pour savoir quand statut de l'expérience est "à renouveler", le technicien initialement en charge peut la transmettre à un de ses collègues
+-- Test pour savoir quand statut de l'experience est "a� renouveler", le technicien initialement en charge peut la transmettre a�un de ses collegues
 CREATE OR REPLACE PROCEDURE Test_changement_technicien DETERMINISTIC AS
     l_id_photometre INT;
     l_id_equipe INT;
@@ -372,7 +372,7 @@ BEGIN
     INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('libre');
     SELECT id_technicien_TECHNICIEN INTO l_id_technicien FROM TECHNICIEN WHERE ROWNUM = 1 ORDER BY id_technicien_TECHNICIEN DESC;
     
-    INSERT INTO EQUIPE (adresse) VALUES ('Université de Poitiers');
+    INSERT INTO EQUIPE (adresse) VALUES ('Universite de Poitiers');
     SELECT id_equipe_EQUIPE INTO l_id_equipe FROM EQUIPE WHERE ROWNUM = 1 ORDER BY id_equipe_EQUIPE DESC;
     
     INSERT INTO CHERCHEUR (id_equipe_EQUIPE) VALUES (l_id_equipe);
@@ -382,20 +382,20 @@ BEGIN
     SELECT id_facture_FACTURE INTO l_id_facture FROM FACTURE WHERE ROWNUM = 1 ORDER BY id_facture_FACTURE DESC;
     
     INSERT INTO EXPERIENCE (statut_exp_EXPERIENCE, nb_prog_EXPERIENCE, date_debut_EXPERIENCE, date_fin_EXPERIENCE, date_transmission_resultats_EXPERIENCE, cout_exp_EXPERIENCE, type_exp_EXPERIENCE, moyenne_globale_EXPERIENCE, ecart_type_global_EXPERIENCE, a1_EXPERIENCE, a2_EXPERIENCE, a3_EXPERIENCE, coef_surcout_EXPERIENCE, frequence_obs_EXPERIENCE, date_commande_COMMANDE, ordre_priorite_COMMANDE, id_technicien_TECHNICIEN, facture_id_facture_facture, id_chercheur_CHERCHEUR, id_position_ATTENTE) 
-    VALUES ('en cours', 2, TO_DATE('2024-01-01', 'YYYY-MM-DD'), TO_DATE('2024-05-0', 'YYYY-MM-DD'), TO_DATE('2024-05-22', 'YYYY-MM-DD'), 300.00, 'colorimétrique', 150.0, 25.0, 1, 2, 3, 2, 10, TO_DATE('2024-03-20', 'YYYY-MM-DD'), 1, l_id_technicien, l_id_facture, l_id_chercheur, l_id_attente);
+    VALUES ('en cours', 2, TO_DATE('2024-01-01', 'YYYY-MM-DD'), TO_DATE('2024-05-0', 'YYYY-MM-DD'), TO_DATE('2024-05-22', 'YYYY-MM-DD'), 300.00, 'colorim�trique', 150.0, 25.0, 1, 2, 3, 2, 10, TO_DATE('2024-03-20', 'YYYY-MM-DD'), 1, l_id_technicien, l_id_facture, l_id_chercheur, l_id_attente);
     SELECT id_exp_EXPERIENCE INTO l_id_experience FROM EXPERIENCE WHERE ROWNUM = 1 ORDER BY id_exp_EXPERIENCE DESC;
     
     INSERT INTO TECHNICIEN (etat_technicien_TECHNICIEN) VALUES ('libre');
     SELECT id_technicien_TECHNICIEN INTO l_id_technicien_2 FROM TECHNICIEN WHERE ROWNUM = 1 ORDER BY id_technicien_TECHNICIEN DESC;
     
-    -- Mettre à jour le statut de l'expérience
+    -- Mettre a jour le statut de l'experience
     UPDATE EXPERIENCE
-    SET statut_exp_EXPERIENCE = 'ratée',
+    SET statut_exp_EXPERIENCE = 'rat�e',
         id_technicien_TECHNICIEN = l_id_technicien_2
     WHERE id_exp_EXPERIENCE = l_id_experience;
     
     ROLLBACK;
-    -- Si l'insertion réussit, affiche un message indiquant que le test est reussis
+    -- Si l'insertion reussit, affiche un message indiquant que le test est reussis
     INSERT INTO TraceTest VALUES ('Test_changement_technicien ', 'ok');
     COMMIT;
 EXCEPTION
