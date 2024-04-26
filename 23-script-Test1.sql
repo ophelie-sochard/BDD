@@ -1,3 +1,5 @@
+-- AUBINEAU Nathan - DEWITTE Lisa - SOCHARD Ophélie
+
 DROP TABLE TRACETEST;
 --Creation de la table contenant le resultat des tests
 CREATE TABLE TRACETEST (

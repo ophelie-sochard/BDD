@@ -1,3 +1,5 @@
+-- AUBINEAU Nathan - DEWITTE Lisa - SOCHARD Ophélie
+
 DECLARE 
   existe_LOT INTEGER ;
 

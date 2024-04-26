@@ -1,3 +1,5 @@
+-- AUBINEAU Nathan - DEWITTE Lisa - SOCHARD Ophélie
+
 ALTER TABLE LOT
 ADD CONSTRAINT CHK_TypePlaque CHECK (type_plaque_LOT IN (96, 384));
 
@@ -19,6 +21,15 @@ ADD CONSTRAINT CHK_ValCouleurs CHECK (
     Td_PIXEL >= 0 AND Td_PIXEL <= 255
 );
 
+ALTER TABLE PHOTOMETRE
+ADD CONSTRAINT CHK_EtatPhotometre CHECK (etat_photometre_PHOTOMETRE IN ('vide', 'occupé', 'en panne'));
+
+ALTER TABLE EXPERIENCE
+ADD CONSTRAINT CHK_EtatExperience CHECK (statut_exp_EXPERIENCE IN ('en cours', 'en attente', 'effectuée', 'ratée'));
+
+ALTER TABLE EXPERIENCE
+ADD CONSTRAINT CHK_OrdrePriorite CHECK (ORDRE_PRIORITE_COMMANDE BETWEEN 1 AND 5);
+
 CREATE OR REPLACE TRIGGER TRG_CheckTransmissionExperience
 BEFORE UPDATE ON EXPERIENCE
 FOR EACH ROW
@@ -37,27 +48,6 @@ BEGIN
 END;
 /
 
-ALTER TABLE PHOTOMETRE
-ADD CONSTRAINT CHK_EtatPhotometre CHECK (etat_photometre_PHOTOMETRE IN ('vide', 'occupé', 'en panne'));
-
-ALTER TABLE EXPERIENCE
-ADD CONSTRAINT CHK_EtatExperience CHECK (statut_exp_EXPERIENCE IN ('en cours', 'en attente', 'effectuée', 'ratée'));
-
-ALTER TABLE EXPERIENCE
-ADD CONSTRAINT CHK_OrdrePriorite CHECK (ORDRE_PRIORITE_COMMANDE BETWEEN 1 AND 5);
-
-CREATE OR REPLACE TRIGGER TRG_GROUPE_Refus
-AFTER UPDATE OF acceptation_GROUPE ON GROUPE
-FOR EACH ROW
-BEGIN
-    IF :new.acceptation_GROUPE = 0 THEN
-        UPDATE EXPERIENCE
-        SET statut_exp_EXPERIENCE = 'ratée'
-        WHERE id_exp_EXPERIENCE = : new.id_groupe_GROUPE;
-    END IF;
-END;
-/
-
 CREATE OR REPLACE TRIGGER TRG_LOT_Rachat
 BEFORE UPDATE OF stock_actuel_stock ON LOT
 FOR EACH ROW
@@ -68,12 +58,35 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE TRIGGER trg_plaque_stock_init
-Before INSERT ON LOT
+CREATE OR REPLACE TRIGGER trg_maj_stock_precedent
+BEFORE INSERT ON LOT
 FOR EACH ROW
+DECLARE
+    l_stock_precedent NUMBER;
 BEGIN
-    -- Mettre à jour le stock actuel du lot à 80 avant l'insertion du lot
-    :new.stock_actuel_stock := 80;
+    -- Vérifier s'il existe un lot précédent
+    SELECT COUNT(*)
+    INTO l_stock_precedent
+    FROM LOT;
+
+    IF l_stock_precedent > 0 THEN
+        -- Sélectionner le stock_actuel de la ligne précédente
+        SELECT stock_actuel_Stock
+        INTO l_stock_precedent
+        FROM (
+            SELECT stock_actuel_Stock
+            FROM LOT
+            WHERE date_livraison_LOT < :NEW.date_livraison_LOT
+            ORDER BY date_livraison_LOT DESC
+        )
+        WHERE ROWNUM <= 1;
+    ELSE
+        -- S'il n'y a pas de ligne précédente, initialiser le stock_precedent à 0
+        l_stock_precedent := 0;
+    END IF;
+
+    -- Affecter la valeur de stock_precedent au nouveau lot
+    :NEW.stock_precedent_Stock := l_stock_precedent;
 END;
 /
 
@@ -84,10 +97,8 @@ DECLARE
     l_lot_id NUMBER;
     l_nb_slots NUMBER;
 BEGIN
-   
     l_lot_id := :new.code_barre_lot_LOT;
     l_nb_slots := :new.type_plaque_lot;
-      
     FOR i IN 1..80 LOOP
         INSERT INTO PLAQUE (code_barre_plaque_PLAQUE, code_barre_lot_LOT, nb_slots_libre)
         VALUES (SEQ_PLAQUE.NEXTVAL, l_lot_id, l_nb_slots);
@@ -105,7 +116,6 @@ BEGIN
     SELECT nb_slots_libre INTO l_nb_slots_libre
     FROM PLAQUE
     WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
-
     -- Vérifier si le nombre de slots libres est supérieur à zéro
     IF l_nb_slots_libre > 0 THEN
         -- Décrémenter le nombre de slots libres de trois
@@ -224,20 +234,31 @@ FOR EACH ROW
 DECLARE
     l_stock_actuel NUMBER;
 BEGIN
-    -- Sélectionner le stock actuel de l'avant-dernier lot
-    SELECT stock_actuel_Stock
+    -- Vérifier s'il existe un lot précédent
+    SELECT COUNT(*)
     INTO l_stock_actuel
-    FROM (
+    FROM LOT;
+
+    IF l_stock_actuel > 0 THEN
+        -- Sélectionner le stock actuel de l'avant-dernier lot
         SELECT stock_actuel_Stock
-        FROM LOT
-        ORDER BY date_livraison_LOT DESC
-    )
-    WHERE ROWNUM <= 1;
+        INTO l_stock_actuel
+        FROM (
+            SELECT stock_actuel_Stock
+            FROM LOT
+            ORDER BY date_livraison_LOT DESC
+        )
+        WHERE ROWNUM <= 1;
+    ELSE
+        -- S'il n'y a pas de lot précédent, initialiser le stock à 0
+        l_stock_actuel := 0;
+    END IF;
 
     -- Mettre à jour le stock actuel du nouveau lot
     :NEW.stock_actuel_Stock := l_stock_actuel + 80;
 END;
 /
+
 
 CREATE OR REPLACE TRIGGER TRG_ReduireFileAttente
 AFTER UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
@@ -276,6 +297,7 @@ BEGIN
     END IF;
 END;
 /
+drop trigger TRG_changement_technicien
 CREATE OR REPLACE TRIGGER TRG_changement_technicien
 BEFORE UPDATE ON EXPERIENCE
 FOR EACH ROW
@@ -577,7 +599,6 @@ BEGIN
     END IF;
 END;
 /
-
 
 DROP TRIGGER TRG_CalculCoefSurcout;
 

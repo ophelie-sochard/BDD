@@ -1,7 +1,9 @@
+-- AUBINEAU Nathan - DEWITTE Lisa - SOCHARD Ophélie
+
 -- Peuplement de la table LOT
-INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock) 
+INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock) 
 VALUES 
-(96, TO_DATE('2024-01-01', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0, 80);
+(96, TO_DATE('2024-01-01', 'YYYY-MM-DD'), 'Vendeur1', 'Fabricant1', 0);
 INSERT INTO LOT (type_plaque_LOT, date_livraison_LOT, vendeur_LOT, fabricant_LOT, stock_precedent_Stock, stock_actuel_Stock) 
 VALUES 
 (384, TO_DATE('2024-01-01', 'YYYY-MM-DD'), 'Vendeur2', 'Fabricant2', 0, 80);
@@ -55,8 +57,8 @@ VALUES ('occupé');
 INSERT INTO CHERCHEUR (id_equipe_EQUIPE) 
 VALUES ((SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 81));
 INSERT INTO CHERCHEUR (id_equipe_EQUIPE) 
-VALUES ((SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 34));
-INSERT INTO CHERCHEUR (id_equipe_EQUIPE) 
+ VALUES ((SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 121));
+INSERT INTO CHERCHEUR (id_equipe_EQUIPE)
 VALUES ((SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 35));
 INSERT INTO CHERCHEUR (id_equipe_EQUIPE) 
 VALUES ((SELECT id_equipe_EQUIPE FROM EQUIPE WHERE id_equipe_EQUIPE = 36));
@@ -130,7 +132,9 @@ delete from PUITS;
 
 
 INSERT INTO EXPERIENCE (TYPE_EXP_EXPERIENCE,daTE_commande_commande,ORDRE_PRIORITE_COMMANDE,id_technicien_TECHNICIEN, id_chercheur_CHERCHEUR, NB_GROUPE) 
-VALUES ('opacimétrique',sysdate,1,(SELECT id_technicien_TECHNICIEN FROM TECHNICIEN WHERE id_technicien_TECHNICIEN = 81), (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR WHERE id_chercheur_CHERCHEUR = 81),1);
+VALUES ('opacimétrique',sysdate,1,(SELECT id_technicien_TECHNICIEN FROM TECHNICIEN ORDER BY DBMS_RANDOM.VALUE() FETCH FIRST 1 ROW ONLY),
+    (SELECT id_chercheur_CHERCHEUR FROM CHERCHEUR ORDER BY DBMS_RANDOM.VALUE() FETCH FIRST 1 ROW ONLY)
+,1);
 
 update experience
 set TYPE_EXP_EXPERIENCE='opacimétrique'
