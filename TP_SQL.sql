@@ -1,3 +1,5 @@
+-- AUBINEAU Nathan - DEWITTE Lisa - SOCHARD Ophélie
+
 ALTER TABLE LOT
 ADD CONSTRAINT CHK_TypePlaque CHECK (type_plaque_LOT IN (96, 384));
 
@@ -541,7 +543,6 @@ BEGIN
     END IF;
 END;
 /
-
 
 DROP TRIGGER TRG_CalculCoefSurcout;
 
