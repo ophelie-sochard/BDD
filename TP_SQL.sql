@@ -57,12 +57,36 @@ BEGIN
     END IF;
 END;
 /
--- Mettre à jour le stock actuel du lot à 80 avant l'insertion du lot
-CREATE OR REPLACE TRIGGER trg_plaque_stock_init
-Before INSERT ON LOT
+
+CREATE OR REPLACE TRIGGER trg_maj_stock_precedent
+BEFORE INSERT ON LOT
 FOR EACH ROW
+DECLARE
+    l_stock_precedent NUMBER;
 BEGIN
-    :new.stock_actuel_stock := 80;
+    -- Vérifier s'il existe un lot précédent
+    SELECT COUNT(*)
+    INTO l_stock_precedent
+    FROM LOT;
+
+    IF l_stock_precedent > 0 THEN
+        -- Sélectionner le stock_actuel de la ligne précédente
+        SELECT stock_actuel_Stock
+        INTO l_stock_precedent
+        FROM (
+            SELECT stock_actuel_Stock
+            FROM LOT
+            WHERE date_livraison_LOT < :NEW.date_livraison_LOT
+            ORDER BY date_livraison_LOT DESC
+        )
+        WHERE ROWNUM <= 1;
+    ELSE
+        -- S'il n'y a pas de ligne précédente, initialiser le stock_precedent à 0
+        l_stock_precedent := 0;
+    END IF;
+
+    -- Affecter la valeur de stock_precedent au nouveau lot
+    :NEW.stock_precedent_Stock := l_stock_precedent;
 END;
 /
 
@@ -204,6 +228,41 @@ BEGIN
 END;
 /
 
+<<<<<<< Updated upstream
+=======
+CREATE OR REPLACE TRIGGER trg_maj_stock
+BEFORE INSERT ON LOT
+FOR EACH ROW
+DECLARE
+    l_stock_actuel NUMBER;
+BEGIN
+    -- Vérifier s'il existe un lot précédent
+    SELECT COUNT(*)
+    INTO l_stock_actuel
+    FROM LOT;
+
+    IF l_stock_actuel > 0 THEN
+        -- Sélectionner le stock actuel de l'avant-dernier lot
+        SELECT stock_actuel_Stock
+        INTO l_stock_actuel
+        FROM (
+            SELECT stock_actuel_Stock
+            FROM LOT
+            ORDER BY date_livraison_LOT DESC
+        )
+        WHERE ROWNUM <= 1;
+    ELSE
+        -- S'il n'y a pas de lot précédent, initialiser le stock à 0
+        l_stock_actuel := 0;
+    END IF;
+
+    -- Mettre à jour le stock actuel du nouveau lot
+    :NEW.stock_actuel_Stock := l_stock_actuel + 80;
+END;
+/
+
+
+>>>>>>> Stashed changes
 CREATE OR REPLACE TRIGGER TRG_ReduireFileAttente
 AFTER UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
