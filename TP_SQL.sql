@@ -228,8 +228,6 @@ BEGIN
 END;
 /
 
-<<<<<<< Updated upstream
-=======
 CREATE OR REPLACE TRIGGER trg_maj_stock
 BEFORE INSERT ON LOT
 FOR EACH ROW
@@ -262,7 +260,6 @@ END;
 /
 
 
->>>>>>> Stashed changes
 CREATE OR REPLACE TRIGGER TRG_ReduireFileAttente
 AFTER UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
