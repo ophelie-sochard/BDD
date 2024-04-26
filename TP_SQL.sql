@@ -45,6 +45,16 @@ BEGIN
     END IF;
 END;
 /
+
+CREATE OR REPLACE TRIGGER TRG_LOT_Rachat
+BEFORE UPDATE OF stock_actuel_stock ON LOT
+FOR EACH ROW
+BEGIN
+    IF :new.stock_actuel_stock < :old.stock_precedent_stock THEN
+        :new.stock_actuel_stock := :old.stock_actuel_stock + :new.stock_precedent_stock;
+    END IF;
+END;
+/
 -- Mettre à jour le stock actuel du lot à 80 avant l'insertion du lot
 CREATE OR REPLACE TRIGGER trg_plaque_stock_init
 Before INSERT ON LOT
