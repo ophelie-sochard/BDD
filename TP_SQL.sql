@@ -1,14 +1,18 @@
 -- AUBINEAU Nathan - DEWITTE Lisa - SOCHARD Ophélie
 
+--Chaque plaque a soit 96 ou 384 puits
 ALTER TABLE LOT
 ADD CONSTRAINT CHK_TypePlaque CHECK (type_plaque_LOT IN (96, 384));
 
+--Le statut du technicien est soit libre soit occupé
 ALTER TABLE TECHNICIEN
 ADD CONSTRAINT CHK_EtatTechnicien CHECK (etat_technicien_TECHNICIEN IN ('libre', 'occupé'));
 
+--Le type d'expérience est colorimétrique ou opacimétrique
 ALTER TABLE EXPERIENCE
 ADD CONSTRAINT CHK_TypeExperience CHECK (TYPE_EXP_EXPERIENCE IN ('colorimétrique','opacimétrique'));
 
+--Les valeurs R, V, B et T sont comprises entre 0 et 255
 ALTER TABLE PUITS
 ADD CONSTRAINT CHK_ValCouleurs CHECK (
     Rm_PIXEL >= 0 AND Rm_PIXEL <= 255 AND
@@ -21,33 +25,44 @@ ADD CONSTRAINT CHK_ValCouleurs CHECK (
     Td_PIXEL >= 0 AND Td_PIXEL <= 255
 );
 
+--L'état du photomètre est soit vide, soit occupé, soit en panne
 ALTER TABLE PHOTOMETRE
 ADD CONSTRAINT CHK_EtatPhotometre CHECK (etat_photometre_PHOTOMETRE IN ('vide', 'occupé', 'en panne'));
 
+--Le statut de l'expérience est soit à ratée, effectuée, en attente, en cours
 ALTER TABLE EXPERIENCE
 ADD CONSTRAINT CHK_EtatExperience CHECK (statut_exp_EXPERIENCE IN ('en cours', 'en attente', 'effectuée', 'ratée'));
 
+--L'indice de priorité est compris entre 1 et 5 
 ALTER TABLE EXPERIENCE
 ADD CONSTRAINT CHK_OrdrePriorite CHECK (ORDRE_PRIORITE_COMMANDE BETWEEN 1 AND 5);
 
+--Si l'experience est ratée, le technicien devient libre
 CREATE OR REPLACE TRIGGER TRG_CheckTransmissionExperience
 BEFORE UPDATE ON EXPERIENCE
 FOR EACH ROW
 DECLARE
     v_tech_state VARCHAR2(50);
 BEGIN
-    IF :new.statut_exp_EXPERIENCE = 'ratée' THEN
+    -- Vérifier si le statut de l'expérience est passé à "ratée"
+    IF :NEW.statut_exp_EXPERIENCE = 'ratée' THEN
+        -- Récupérer l'état actuel du technicien
         SELECT etat_technicien_TECHNICIEN INTO v_tech_state
         FROM TECHNICIEN
-        WHERE id_technicien_TECHNICIEN = :new.id_technicien_TECHNICIEN;
+        WHERE id_technicien_TECHNICIEN = :NEW.id_technicien_TECHNICIEN; 
 
+        -- Vérifier si le technicien n'est pas déjà libre
         IF v_tech_state != 'libre' THEN
-            RAISE_APPLICATION_ERROR(-20001, 'Le technicien en charge n''est pas libre pour transmettre l''expérience.');
+            -- Si le technicien n'est pas libre, alors le mettre à libre
+            UPDATE TECHNICIEN
+            SET etat_technicien_TECHNICIEN = 'libre'
+            WHERE id_technicien_TECHNICIEN = :NEW.id_technicien_TECHNICIEN;
         END IF;
     END IF;
 END;
 /
 
+--Rachat de plaques quand le stock est inférieur au nombre de plaques utilisées le dernier trimestre
 CREATE OR REPLACE TRIGGER TRG_LOT_Rachat
 BEFORE UPDATE OF stock_actuel_stock ON LOT
 FOR EACH ROW
@@ -57,7 +72,7 @@ BEGIN
     END IF;
 END;
 /
-
+--pour mettre à jour le stock precedent
 CREATE OR REPLACE TRIGGER trg_maj_stock_precedent
 BEFORE INSERT ON LOT
 FOR EACH ROW
@@ -90,6 +105,7 @@ BEGIN
 END;
 /
 
+--Les plaques sont achetées par lot de 80
 CREATE OR REPLACE TRIGGER trg_plaque_insert
 After INSERT ON LOT
 FOR EACH ROW
@@ -106,6 +122,7 @@ BEGIN
 END;
 /
 
+--S'il reste suffisamment de slots dans une plaque, alloue ces slots aux groupes
 CREATE OR REPLACE TRIGGER trg_update_slots
 BEFORE INSERT ON GROUPE
 FOR EACH ROW
@@ -124,11 +141,11 @@ BEGIN
         WHERE code_barre_plaque_PLAQUE = :NEW.code_barre_plaque_PLAQUE;
     ELSE
         -- Générer une erreur et annuler l'insertion si le nombre de slots libres est égal à zéro
-        RAISE_APPLICATION_ERROR(-20001, 'Impossible d insérer un groupe car le nombre de slots libres est égal à zéro.');
+        RAISE_APPLICATION_ERROR(-20008, 'Impossible d insérer un groupe car le nombre de slots libres est égal à zéro.');
     END IF;
 END;
 /
--- mise a jour du stock
+-- mise a jour du stock S'il reste moins de 3 emplacements dans une plaque, une nouvelle plaque est attribuée aux groupes avec mise à jour du stock
 CREATE OR REPLACE TRIGGER trg_update_stock_lot
 AFTER INSERT ON GROUPE
 FOR EACH ROW
@@ -137,7 +154,7 @@ DECLARE
     l_nb_slots_libre NUMBER;
     l_type_plaque_lot LOT.type_plaque_lot%TYPE;
     l_code_barre_lot_plaque PLAQUE.code_barre_lot_lot%TYPE;
-    l_fabricant_lot VARCHAR2(250 BYTE); -- Changer la taille en fonction de votre modèle de données
+    l_fabricant_lot VARCHAR2(250 BYTE);
     l_vendeur_lot VARCHAR2(250 BYTE);
 BEGIN
     -- Récupérer le nombre de slots libres pour la nouvelle plaque insérée
@@ -182,12 +199,13 @@ BEGIN
         ELSE
         -- Insérer un nouveau lot si le stock est inférieur à zéro
         INSERT INTO LOT (stock_precedent_stock,stock_actuel_stock,type_plaque_lot, fabricant_lot, vendeur_lot,date_livraison_lot)
-        VALUES (0,80,l_type_plaque_lot,l_fabricant_lot,l_vendeur_lot, sysdate); -- Exemple de valeurs à insérer
+        VALUES (0,80,l_type_plaque_lot,l_fabricant_lot,l_vendeur_lot, sysdate); 
         END IF;
     END IF;
 END;
 /
 
+--Si experience colorimétrique : Tm_PIXEL et Td_PIXEL à NULL dans PUITS
 CREATE OR REPLACE TRIGGER TRG_puits_colorimetrie
 AFTER INSERT OR UPDATE ON EXPERIENCE
 FOR EACH ROW
@@ -206,6 +224,7 @@ BEGIN
 END;
 /
 
+--Si experience opacimetriee : mettre a jour Tm_PIXEL et Td_PIXEL 
 CREATE OR REPLACE TRIGGER TRG_puits_opacimetrie
 AFTER INSERT OR UPDATE ON EXPERIENCE
 FOR EACH ROW
@@ -213,7 +232,7 @@ BEGIN
     IF :NEW.type_exp_EXPERIENCE = 'opacimétrique' THEN
         -- Mise à jour des champs Tm_PIXEL et Td_PIXEL à NULL dans PUITS
         UPDATE PUITS
-        SET Rm_PIXEL = NULL,
+        SET Rm_PIXEL = NULL, --caractéristique colorimetrique
             Rd_PIXEL = NULL,
             Vm_PIXEL = NULL,
             Vd_PIXEL = NULL,
@@ -228,6 +247,7 @@ BEGIN
 END;
 /
 
+--Le stock actuel devrait être le stock actuel du dernier lot inséré dans la table + 80 
 CREATE OR REPLACE TRIGGER trg_maj_stock
 BEFORE INSERT ON LOT
 FOR EACH ROW
@@ -259,7 +279,7 @@ BEGIN
 END;
 /
 
-
+--La file d'attente se met à jour quand l'expérience se termine
 CREATE OR REPLACE TRIGGER TRG_ReduireFileAttente
 AFTER UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
@@ -291,15 +311,15 @@ BEGIN
                 UPDATE ATTENTE
                 SET position_ATTENTE = position_ATTENTE - 1
                 WHERE id_photometre_PHOTOMETRE = v_photometre_id
-                AND position_ATTENTE > 0; -- Assurez-vous que la position ne devient pas négative
+                AND position_ATTENTE > 0; --  la position ne devient pas négative
             END IF;
         END;
     END IF;
 END;
 /
-drop trigger TRG_changement_technicien
+--transmission de l'experience
 CREATE OR REPLACE TRIGGER TRG_changement_technicien
-BEFORE UPDATE ON EXPERIENCE
+AFTER UPDATE ON EXPERIENCE
 FOR EACH ROW
 DECLARE
     l_statut_old VARCHAR2(250);
@@ -311,13 +331,13 @@ BEGIN
     ELSE
         -- Sinon, vérifier si le technicien a changé
         IF :NEW.id_technicien_TECHNICIEN <> :OLD.id_technicien_TECHNICIEN THEN
-            -- Si le technicien a changé alors annuler la mise à jour en levant une exception
-            RAISE_APPLICATION_ERROR(-20001, 'Impossible de changer le technicien sauf si le statut de l''expérience est "ratée"');
+            -- Si le technicien a changé alors annuler la mise à jour 
+            RAISE_APPLICATION_ERROR(-20010, 'Impossible de changer le technicien sauf si le statut de l''expérience est "ratée"');
         END IF;
     END IF;
 END;
 /
-
+--Création automatique de la postion d'attente du photomètre
 CREATE OR REPLACE TRIGGER TRG_MajFileAttente
 BEFORE INSERT ON ATTENTE
 FOR EACH ROW
@@ -338,6 +358,7 @@ BEGIN
 END;
 /
 
+--calcul du cout de la facture
 CREATE OR REPLACE TRIGGER trg_calcul_cout_facture
 BEFORE INSERT ON FACTURE
 FOR EACH ROW
@@ -356,7 +377,6 @@ BEGIN
     :NEW.cout_facture_FACTURE := v_cout_total;
 END;
 /
-
 
 --insertion dans la la table groupe apres la création d'une experience et que celle ci est ratacher a un technicien
 CREATE OR REPLACE TRIGGER trg_auto_insert_groupe
@@ -413,6 +433,7 @@ BEGIN
 END;
 /
 
+--Mets à jour la date de l'expérience et son statut si un technicien est associé à l'expérience
 CREATE OR REPLACE TRIGGER trg_maj_date
 BEFORE insert or UPDATE ON experience
 FOR EACH ROW
@@ -455,14 +476,12 @@ COMPOUND TRIGGER
     TYPE t_group_ids IS TABLE OF puits.id_groupe_groupe%TYPE;
     v_group_ids t_group_ids := t_group_ids();
 
-    -- Before Statement Section
     BEFORE STATEMENT IS
     BEGIN
         -- Initialisation de la collection des ID de groupe
         v_group_ids := t_group_ids();
     END BEFORE STATEMENT;
 
-    -- Before Each Row Section
     BEFORE EACH ROW IS
     BEGIN
         -- Ajout de l'ID de groupe modifié à la collection
@@ -472,7 +491,6 @@ COMPOUND TRIGGER
         END IF;
     END BEFORE EACH ROW;
 
-    -- After Statement Section
     AFTER STATEMENT IS
     BEGIN
         -- Parcours des ID de groupe uniques et mise à jour des colonnes de groupe pour chaque groupe
@@ -483,6 +501,7 @@ COMPOUND TRIGGER
 END trg_update_groupe;
 /
 
+--fonction pour calculer les moyennes, ecart type, acceptation
 CREATE OR REPLACE PROCEDURE calculer_moyennes(p_id_groupe IN puits.id_groupe_groupe%TYPE) AS
     v_moyenne_rm NUMBER;
     v_moyenne_vm NUMBER;
@@ -600,8 +619,7 @@ BEGIN
 END;
 /
 
-DROP TRIGGER TRG_CalculCoefSurcout;
-
+--Calcul du coefficient de sucrout
 CREATE OR REPLACE TRIGGER TRG_CalculCoefSurcout
 BEFORE UPDATE OF statut_exp_EXPERIENCE ON EXPERIENCE
 FOR EACH ROW
